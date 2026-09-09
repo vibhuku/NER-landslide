@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="NER-Landslide: AI-based early warning and risk monitoring dashboard" />
+    <title>NER-Landslide | Operational Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="map-fixes.css" />
+    <script>
+      (function () {
+        const theme = localStorage.getItem('nera_theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#map">Skip to map</a>
+    <header class="topbar">
+      <a class="brand" href="#dashboard" aria-label="NER-Landslide dashboard">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span><strong>NER-Landslide</strong><small>AI-Based Early Warning &amp; Risk Monitoring</small></span>
+      </a>
+      <nav aria-label="Main navigation">
+        <a class="active" href="#dashboard">Dashboard</a><a href="#map-region">Risk Map</a><a href="#alerts">Alerts</a><a href="#analytics">Analytics</a><a href="#reports">Reports</a><a href="#methodology">About</a>
+      </nav>
+      <div class="system-meta"><span class="live"><b></b> System operational</span><span>Updated <time id="updateTime"></time></span></div>
+      <div class="topbar-actions">
+        <button id="themeToggle" class="theme-toggle-btn" aria-label="Toggle dark and light theme" title="Toggle theme (Dark / Light)">
+          <span id="themeIcon">🌙</span>
+        </button>
+        <button id="btnOpenAuth" class="topbar-auth-btn"><span id="authStatusText">Login</span></button>
+        <div class="user-profile-menu-wrap" id="userProfileMenuWrap" style="display:none;">
+          <button type="button" class="topbar-user-btn" id="btnUserMenu" aria-expanded="false" title="Account Menu">
+            <img id="userAvatarImg" class="user-avatar-img" src="" alt="Avatar" style="display:none;" />
+            <span id="userAvatarPlaceholder" class="user-avatar-placeholder">👤</span>
+            <span id="userDisplayName" class="user-display-name">User</span>
+            <span class="user-menu-chevron" aria-hidden="true">▾</span>
+          </button>
+          <div class="user-dropdown-menu" id="userDropdownMenu" style="display:none;">
+            <div class="user-dropdown-header">
+              <strong id="dropdownUserName">User Name</strong>
+              <small id="dropdownUserEmail">user@example.com</small>
+              <div style="margin-top:4px;"><span id="dropdownUserRole" class="badge-role">Public</span></div>
+            </div>
+            <div class="user-dropdown-divider"></div>
+            <button type="button" class="user-dropdown-item" id="menuItemProfile">
+              <span>👤 Profile</span>
+            </button>
+            <button type="button" class="user-dropdown-item" id="menuItemMyReports">
+              <span>📋 My Reports</span>
+            </button>
+            <div class="user-dropdown-divider"></div>
+            <button type="button" class="user-dropdown-item logout" id="menuItemLogout">
+              <span>🚪 Logout</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main id="dashboard">
+      <!-- Dark Hero Section -->
+      <section class="hero-section" id="hero">
+        <div class="hero-content">
+          <div class="hero-pill">
+            <span class="hero-pulse"></span>
+            <span>NERA 2.0 Operational Monitoring · 8 NER States</span>
+          </div>
+          <h1 class="hero-heading">AI-Powered Landslide Early Warning for North East India</h1>
+          <p class="hero-lead">
+            Continuous geotechnical intelligence, satellite radar deformation monitoring, and real-time citizen reporting for disaster risk reduction across Arunachal Pradesh, Assam, Manipur, Meghalaya, Mizoram, Nagaland, Sikkim, and Tripura.
+          </p>
+          <div class="hero-actions">
+            <a href="#map-region" class="btn-hero-primary">View Live Risk Map</a>
+            <button id="heroBtnReport" class="btn-hero-secondary">Report Incident</button>
+          </div>
+          <div class="hero-badges-row">
+            <div class="hero-stat-badge">
+              <span class="stat-digit">8</span>
+              <span class="stat-text">NER States Monitored</span>
+            </div>
+            <div class="hero-stat-badge">
+              <span class="stat-digit">6-Factor</span>
+              <span class="stat-text">AI Geotechnical Model</span>
+            </div>
+            <div class="hero-stat-badge">
+              <span class="stat-digit">Dual Spatial</span>
+              <span class="stat-text">PostGIS + SQLite Engine</span>
+            </div>
+          </div>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <svg class="hero-terrain-svg" viewBox="0 0 460 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="heroTerrainGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.25" />
+                <stop offset="100%" stop-color="#1d4ed8" stop-opacity="0.05" />
+              </linearGradient>
+            </defs>
+            <path d="M10 240 C 90 160, 180 220, 290 150 C 350 110, 400 160, 450 120" stroke="rgba(59, 130, 246, 0.35)" stroke-width="1.8" stroke-dasharray="3 3" fill="none"/>
+            <path d="M20 200 C 110 120, 200 170, 310 100 C 370 60, 410 90, 450 70" stroke="rgba(59, 130, 246, 0.45)" stroke-width="2" fill="none"/>
+            <path d="M40 150 C 120 70, 220 120, 330 60 C 370 30, 410 50, 450 30" stroke="rgba(59, 130, 246, 0.25)" stroke-width="1.5" fill="none"/>
+            <path d="M20 200 C 110 120, 200 170, 310 100 C 370 60, 410 90, 450 70 L 450 260 L 10 260 Z" fill="url(#heroTerrainGrad)" opacity="0.25"/>
+            <circle cx="310" cy="100" r="6" fill="#ef4444" opacity="0.9" />
+            <circle cx="310" cy="100" r="14" stroke="#ef4444" stroke-width="1" opacity="0.35" stroke-dasharray="3 3" />
+            <text x="325" y="104" fill="#f8fafc" font-size="10" font-family="'DM Mono', monospace" font-weight="600">Sikkim (Critical)</text>
+            <circle cx="200" cy="170" r="5" fill="#f97316" opacity="0.9" />
+            <text x="215" y="174" fill="#f8fafc" font-size="10" font-family="'DM Mono', monospace" font-weight="600">Arunachal (High)</text>
+            <circle cx="110" cy="210" r="5" fill="#10b981" opacity="0.9" />
+            <text x="125" y="214" fill="#f8fafc" font-size="10" font-family="'DM Mono', monospace" font-weight="600">Tripura (Low)</text>
+          </svg>
+        </div>
+      </section>
+
+      <section class="status-strip" aria-label="Regional overview">
+        <div><span>Regional assessment</span><strong><em class="dot high"></em>Elevated risk</strong><small>2 districts require attention</small></div>
+        <div><span>Active alerts</span><strong id="alertCount">04</strong><small>1 warning · 3 watches</small></div>
+        <div><span>High-risk locations</span><strong>03</strong><small>Across Arunachal &amp; Sikkim</small></div>
+        <div><span>Rainfall status</span><strong>Above normal</strong><small>+18% 24h regional anomaly</small></div>
+        <div><span>Data freshness</span><strong>12 min</strong><small id="dataFreshnessMode">Demo / simulated data</small></div>
+      </section>
+
+      <section class="workspace" id="map-region">
+        <div class="section-heading"><div><p class="eyebrow">Operational GIS view</p><h1>North Eastern Region risk map</h1></div><span class="data-badge" id="dataModeBadge">DEMO / SIMULATED DATA</span></div>
+        <div class="map-layout">
+          <div class="map-shell">
+            <div id="map" aria-label="Interactive map of North East India showing landslide risk markers"></div>
+            <div class="map-caption"><span>Regional operational overview · 8 NER states (Survey of India / DataMeet boundary overlay)</span><div class="legend"><b class="low"></b> Low <b class="moderate"></b> Moderate <b class="high"></b> High <b class="critical"></b> Critical</div></div>
+          </div>
+          <aside class="location-panel" aria-live="polite"><div class="panel-title"><span>Location assessment</span><button id="resetMap" title="Reset map view">Reset</button></div><div id="locationDetail"></div></aside>
+        </div>
+      </section>
+
+      <section class="grid two-col">
+        <article class="panel" id="alerts"><div class="panel-title"><div><p class="eyebrow">Early warning</p><h2>Active advisories</h2></div><button class="text-button">View all alerts</button></div><div id="alertList" class="alert-list"></div></article>
+        <article class="panel environment"><div class="panel-title"><div><p class="eyebrow">Weather &amp; environment</p><h2>Regional conditions</h2></div><span class="muted">Last 24 hours</span></div><div class="metrics"><div><span>Rainfall</span><strong>86 <small>mm</small></strong><b>+18% anomaly</b></div><div><span>Soil moisture</span><strong>72<small>%</small></strong><b>Elevated</b></div><div><span>Temperature</span><strong>23<small>°C</small></strong><b>−2°C normal</b></div><div><span>Humidity</span><strong>89<small>%</small></strong><b>High</b></div></div><div class="chart-head"><span>Rainfall accumulation</span><span>24h / 7-day</span></div><div class="bar-chart" aria-label="Seven day rainfall bar chart"><i style="height:31%"></i><i style="height:43%"></i><i style="height:26%"></i><i style="height:55%"></i><i style="height:39%"></i><i style="height:68%"></i><i class="current" style="height:91%"></i></div><div class="chart-days"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Today</span></div></article>
+      </section>
+
+      <section class="grid three-col" id="analytics">
+        <article class="panel prediction">
+          <p class="eyebrow">AI/ML Risk Prediction</p>
+          <h2>Regional Landslide Risk Index</h2>
+          <div class="circular-gauge-wrap">
+            <svg class="circular-gauge" viewBox="0 0 120 120">
+              <circle class="gauge-bg" cx="60" cy="60" r="48"></circle>
+              <circle class="gauge-fill" id="predictionGaugeFill" cx="60" cy="60" r="48"></circle>
+            </svg>
+            <div class="gauge-center">
+              <span class="gauge-score" id="predictionScoreVal">68</span>
+              <span class="gauge-max">/ 100</span>
+              <span class="gauge-level tag high-tag" id="predictionLevelTag">HIGH</span>
+            </div>
+          </div>
+          <div class="risk-scale"><i></i><i></i><i></i><i></i><b style="left:68%" id="predictionScalePin"></b></div>
+          <p class="muted">6-factor geotechnical inputs: 24h rainfall, soil moisture, slope gradient, digital elevation, historical inventory, and InSAR deformation.</p>
+          <small class="disclaimer">Illustrative calibrated model output — not a certified live warning.</small>
+        </article>
+        <article class="panel"><div class="panel-title"><div><p class="eyebrow">State-wise risk</p><h2>Current distribution</h2></div></div><div id="stateBars" class="state-bars"></div></article>
+        <article class="panel satellite"><p class="eyebrow">Earth observation</p><h2>Satellite data readiness</h2><dl id="satelliteDl"><div><dt>Primary planned source</dt><dd>NISAR L-band &amp; S-band</dd></div><div><dt>ISRO / NRSC Platform</dt><dd>Bhoonidhi Open Data Access</dd></div><div><dt>Coverage</dt><dd>North Eastern Region (8 States)</dd></div><div><dt>Processing status</dt><dd><span class="status-chip" id="satelliteStatusChip">Demo / Data source not connected</span></dd></div></dl><small id="satelliteDisclaimer" class="disclaimer">Demo / Data source not connected</small></article>
+      </section>
+
+      <section class="panel table-panel"><div class="panel-title"><div><p class="eyebrow">State-wise monitoring</p><h2>NER situation register</h2></div><span class="muted">Select a row to locate on map</span></div><div class="table-wrap"><table><thead><tr><th>State</th><th>Risk level</th><th>Score</th><th>Rainfall</th><th>Active alerts</th><th>Last updated</th></tr></thead><tbody id="stateTable"></tbody></table></div></section>
+
+      <section class="grid two-col lower-grid">
+        <article class="panel"><div class="panel-title"><div><p class="eyebrow">Historical landslide data</p><h2>Reference events</h2></div><button class="text-button" id="btnRefreshHistory">Data source notes</button></div><div class="table-wrap compact"><table><thead><tr><th>Location</th><th>Date</th><th>Severity</th><th>Trigger</th></tr></thead><tbody id="historicalTable"><tr><td>Upper Subansiri, AR</td><td>Jul 2024</td><td><span class="tag high-tag">High</span></td><td>Prolonged rainfall</td></tr><tr><td>East Khasi Hills, ML</td><td>Jun 2024</td><td><span class="tag moderate-tag">Moderate</span></td><td>Slope saturation</td></tr><tr><td>North Sikkim, SK</td><td>Oct 2023</td><td><span class="tag critical-tag">Critical</span></td><td>Extreme rainfall</td></tr></tbody></table></div><p class="footnote">Historical records inform model training and validation. Sources must be verified before operational use.</p></article>
+        <article class="panel" id="reports">
+          <div class="panel-title"><div><p class="eyebrow">Reports &amp; Field Intelligence</p><h2>Ground Incident Reports</h2></div><button class="text-button" id="btnRefreshReports">Refresh</button></div>
+          <div id="communityReportsList" class="community-reports-list">
+            <div style="padding:10px 0;color:var(--text-muted);font-size:11px;">Loading submitted incident reports...</div>
+          </div>
+          <div style="margin-top:16px;border-top:1px solid var(--border-subtle);padding-top:12px;">
+            <p class="eyebrow" style="margin-bottom:6px;">Standard Registers</p>
+            <div class="report-list">
+              <button type="button" id="btnDailyRiskReport"><span>Daily Risk Report</span><small>Regional summary · PDF</small><b>›</b></button>
+              <button type="button" id="btnWeeklyRiskSummary"><span>Weekly Risk Summary</span><small>Trend &amp; advisory review</small><b>›</b></button>
+              <button type="button" id="btnStateWiseRiskReport"><span>State-wise Risk Report</span><small>8 state situation register</small><b>›</b></button>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="methodology" id="methodology">
+        <div>
+          <p class="eyebrow">About &amp; methodology</p>
+          <h2>From observation to early warning</h2>
+          <p>NER-Landslide is an AI-based early warning and risk monitoring platform designed to support landslide risk assessment across the eight North Eastern states of India. It combines rainfall, soil moisture, terrain, elevation, historical landslide information and remote-sensing observations with AI/ML-based risk analysis.</p>
+          <p>The platform presents area-level risk through an interactive GIS map, risk scores, alerts and community incident reports, helping authorities and communities make faster, better-informed decisions.</p>
+          <p class="methodology-note">Risk estimates are intended for decision support and should be validated against authoritative operational data before deployment.</p>
+        </div>
+        <ol>
+          <li>Satellite &amp;<br>Remote Sensing</li>
+          <li>Rainfall, Soil Moisture<br>&amp; Terrain</li>
+          <li>Data Processing</li>
+          <li>AI/ML Risk<br>Prediction</li>
+          <li>Early Warning</li>
+        </ol>
+      </section>
+    </main>
+    <footer>NER-Landslide · Prototype • Demo / simulated data unless connected to an authoritative live source</footer>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script type="module" src="app.js?v=2.1.0"></script>
+
+    <!-- Citizen Report Incident Modal -->
+    <div id="reportModal" class="modal-backdrop" aria-hidden="true" role="dialog">
+      <div class="modal-dialog">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">Citizen Ground Intelligence</p>
+            <h3>Submit Landslide Incident</h3>
+          </div>
+          <button class="modal-close" id="btnCloseReportModal" aria-label="Close modal">&times;</button>
+        </div>
+        <div id="offlineNotice" class="offline-notice">
+          <b>Offline Mode Active:</b> Your device is currently offline. This report will be stored in your local IndexedDB queue and automatically synced to the server once internet connectivity returns.
+        </div>
+        <div id="reportAuthPrompt" class="report-auth-banner" style="display:none;">
+          <div class="report-auth-banner-content">
+            <span class="report-auth-icon">ℹ️</span>
+            <div>
+              <p class="report-auth-msg">Please sign in with Google to submit an incident report.</p>
+              <button type="button" id="btnReportSignInGoogle" class="btn-google-signin btn-google-sm">
+                <svg class="google-icon" width="16" height="16" viewBox="0 0 18 18">
+                  <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/>
+                  <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
+                  <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.173 0 7.548 0 9s.347 2.827.957 4.039l3.007-2.332z"/>
+                  <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>
+                </svg>
+                <span>Continue with Google</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <form id="reportForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="repName">Full Name *</label>
+              <input type="text" id="repName" class="form-control" required placeholder="e.g. Tenzing Norbu">
+            </div>
+            <div class="form-group">
+              <label for="repPhone">Contact Phone</label>
+              <input type="tel" id="repPhone" class="form-control" placeholder="+91-XXXXXXXXXX">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="repType">Incident Classification *</label>
+            <select id="repType" class="form-control" required>
+              <option value="Rockfall">Rockfall / Boulder Collapse</option>
+              <option value="Mudslide">Mudslide / Soil Slump</option>
+              <option value="Slope Cracking">Slope Tension Cracking</option>
+              <option value="Debris Flow">Debris Flow / Gully Washout</option>
+              <option value="Road Blockage">Highway Road Blockage</option>
+              <option value="Soil Erosion">Active Soil Erosion</option>
+              <option value="Other">Other Unstable Geomorphic Feature</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>GPS Coordinates *</label>
+            <div style="display:flex;gap:8px;">
+              <input type="number" step="any" id="repLat" class="form-control" placeholder="Latitude (e.g. 27.53)" required style="flex:1;">
+              <input type="number" step="any" id="repLng" class="form-control" placeholder="Longitude (e.g. 88.51)" required style="flex:1;">
+              <button type="button" id="btnAutoGps" class="btn-secondary" style="white-space:nowrap;">Use GPS</button>
+            </div>
+            <small id="gpsHelp" style="color:var(--slate);font-size:10px;margin-top:3px;display:block;">Auto-detect or click anywhere on the Risk Map to pinpoint location.</small>
+          </div>
+          <div class="form-group">
+            <label for="repDesc">Description &amp; Observations *</label>
+            <textarea id="repDesc" rows="3" class="form-control" required placeholder="Describe severity, road blockage, estimated depth, weather conditions..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="repPhoto">Attach Photo / Documentation</label>
+            <input type="file" id="repPhoto" accept="image/*" class="form-control">
+            <div id="photoPreviewContainer" style="margin-top:6px;display:none;">
+              <img id="photoPreview" style="max-height:100px;border:1px solid #bfc9c5;border-radius:2px;" alt="Upload preview">
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" id="btnCancelReport">Cancel</button>
+            <button type="submit" class="btn-primary" id="btnSubmitReport">Submit Report</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Public & Secure Authentication Modal -->
+    <div id="authModal" class="modal-backdrop" aria-hidden="true" role="dialog">
+      <div class="modal-dialog auth-dialog" style="max-width:390px;">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">Sign In</p>
+            <h3 id="authModalTitle">Welcome to NERA</h3>
+          </div>
+          <button class="modal-close" id="btnCloseAuthModal" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="auth-modal-body">
+          <p class="auth-welcome-sub">Sign in to access personalized features and submit incident reports.</p>
+
+          <!-- Primary Option: Google Sign In -->
+          <button type="button" id="btnGoogleSignIn" class="btn-google-signin">
+            <svg class="google-icon" width="18" height="18" viewBox="0 0 18 18">
+              <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/>
+              <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
+              <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.173 0 7.548 0 9s.347 2.827.957 4.039l3.007-2.332z"/>
+              <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>
+            </svg>
+            <span>Continue with Google</span>
+          </button>
+
+          <p class="auth-security-note">
+            Your Google account is used only to authenticate your NERA account.
+          </p>
+
+          <div class="auth-divider">
+            <span>OR EMAIL</span>
+          </div>
+
+          <form id="loginForm">
+            <div class="form-group">
+              <label for="authEmail">Email Address</label>
+              <input type="email" id="authEmail" class="form-control" required placeholder="name@domain.com">
+            </div>
+            <div class="form-group">
+              <label for="authPassword">Password</label>
+              <input type="password" id="authPassword" class="form-control" required placeholder="••••••••">
+            </div>
+            <div id="authError" class="auth-error-msg" style="display:none;"></div>
+            <div class="modal-actions">
+              <button type="button" class="btn-secondary" id="btnCancelAuth">Cancel</button>
+              <button type="submit" class="btn-primary" style="flex:1;">Sign In</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Profile Modal -->
+    <div id="userProfileModal" class="modal-backdrop" aria-hidden="true" role="dialog">
+      <div class="modal-dialog auth-dialog" style="max-width:390px;">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">Account</p>
+            <h3>User Profile</h3>
+          </div>
+          <button class="modal-close" id="btnCloseProfileModal" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="profile-card-content" style="padding:18px 22px;">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
+            <img id="profileCardAvatar" class="profile-card-avatar" src="" alt="Avatar" style="display:none;width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--border-medium);" />
+            <div id="profileCardPlaceholder" style="width:52px;height:52px;border-radius:50%;background:rgba(59,130,246,0.15);display:flex;align-items:center;justify-content:center;font-size:22px;color:#60a5fa;font-weight:700;">👤</div>
+            <div>
+              <strong id="profileCardName" style="display:block;font-size:15px;color:var(--text-primary);">User Name</strong>
+              <span id="profileCardEmail" style="font-size:11px;color:var(--text-secondary);font-family:'DM Mono',monospace;">email@example.com</span>
+              <div style="margin-top:4px;"><span id="profileCardRole" class="badge-role">Public</span></div>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label for="profileEditName">Display Name</label>
+            <input type="text" id="profileEditName" class="form-control" placeholder="Enter your display name">
+          </div>
+          <div id="profileMsg" style="font-size:11px;margin-bottom:10px;display:none;"></div>
+          <div class="modal-actions">
+            <button type="button" class="btn-primary" id="btnSaveProfile">Save</button>
+            <button type="button" class="btn-secondary" id="btnProfileLogout">Logout</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="contact">
+      <div class="panel">
+        <h2>Team Information</h2>
+        <p>For inquiries and technical support, follow our official channel:</p>
+        <a href="https://www.instagram.com/surixo._/" target="_blank" class="text-button">Instagram</a>
+      </div>
+    </section>
+
+    <!-- Standard Risk Report Viewer Modal -->
+    <div id="reportViewerModal" class="modal-backdrop" aria-hidden="true" role="dialog">
+      <div class="modal-dialog" style="max-width: 720px;">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow" id="reportViewerEyebrow">NERA Intelligence Register</p>
+            <h3 id="reportViewerTitle">Standard Risk Report</h3>
+          </div>
+          <button class="modal-close" id="btnCloseReportViewerModal" aria-label="Close modal">&times;</button>
+        </div>
+        <div id="reportViewerContent" class="report-viewer-body" style="padding: 10px 0; max-height: 65vh; overflow-y: auto;"></div>
+        <div class="modal-actions" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 14px; margin-top: 14px;">
+          <span id="reportViewerStatusBadge" class="status-indicator" style="font-size: 10px; font-family: 'DM Mono', monospace;">Demo / Data source not connected</span>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn-secondary" id="btnPrintReportViewer" style="font-size: 11px;">Print / Export PDF</button>
+            <button type="button" class="btn-primary" id="btnCloseReportViewerBtn" style="font-size: 11px;">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation (Home | Map | Report | Alerts) -->
+    <nav class="mobile-bottom-nav" aria-label="Mobile quick navigation">
+      <a href="#hero" class="mobile-nav-link active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        <span>Home</span>
+      </a>
+      <a href="#map-region" class="mobile-nav-link">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+        <span>Map</span>
+      </a>
+      <button type="button" class="mobile-nav-link mobile-nav-btn" id="mobileBtnReport">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+        <span>Report</span>
+      </button>
+      <a href="#alerts" class="mobile-nav-link">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        <span>Alerts</span>
+      </a>
+    </nav>
+  </body>
+</html>
