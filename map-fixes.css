@@ -430,3 +430,683 @@
   opacity: 0.92;
   filter: saturate(0.85) contrast(1.05);
 }
+
+/* ==========================================================================
+   NERA Precision GIS & Geospatial Intelligence Styles
+   ========================================================================== */
+
+.precision-popup {
+  font-family: 'Manrope', -apple-system, sans-serif;
+  color: var(--text-primary, #f8fafc);
+  font-size: 12px;
+  line-height: 1.4;
+  min-width: 250px;
+  max-width: 320px;
+}
+
+.precision-popup .popup-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.1));
+  padding-bottom: 6px;
+}
+
+.precision-popup .popup-category {
+  font: 700 9px 'DM Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #94a3b8);
+}
+
+.precision-popup .popup-title {
+  font-size: 14px;
+  font-weight: 800;
+  margin: 1px 0 0;
+  color: var(--text-primary, #f8fafc);
+}
+
+.precision-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.precision-badge.live {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.precision-badge.available {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+}
+
+.precision-badge.demo {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.precision-badge.processing {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+}
+
+.precision-badge.unconnected {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.popup-risk-strip {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.popup-risk-strip.risk-critical {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border-left: 3px solid #ef4444;
+}
+
+.popup-risk-strip.risk-high {
+  background: rgba(249, 115, 22, 0.2);
+  color: #fdba74;
+  border-left: 3px solid #f97316;
+}
+
+.popup-risk-strip.risk-moderate {
+  background: rgba(234, 179, 8, 0.2);
+  color: #fef08a;
+  border-left: 3px solid #eab308;
+}
+
+.popup-risk-strip.risk-low {
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+  border-left: 3px solid #22c55e;
+}
+
+.precision-popup .popup-section {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 8px;
+}
+
+.precision-popup .popup-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.precision-popup .popup-lbl {
+  color: var(--text-muted, #94a3b8);
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+  text-transform: uppercase;
+}
+
+.precision-popup .popup-val {
+  font-weight: 600;
+  color: var(--text-primary, #f8fafc);
+  text-align: right;
+}
+
+.precision-popup .popup-val.mono {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: #38bdf8;
+}
+
+.popup-address-section {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  border-radius: 4px;
+  padding: 6px 8px;
+  margin-bottom: 10px;
+}
+
+.popup-address-content .addr-line {
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--text-primary, #f8fafc);
+  margin-bottom: 2px;
+}
+
+.popup-address-content .addr-detail {
+  font-size: 10px;
+  color: var(--text-secondary, #cbd5e1);
+}
+
+.popup-address-content .addr-unavailable {
+  font-style: italic;
+  font-size: 10px;
+  color: #f59e0b;
+}
+
+.popup-address-content .addr-loading {
+  font-size: 10px;
+  color: var(--text-muted, #94a3b8);
+  font-style: italic;
+}
+
+.precision-popup .popup-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.btn-gis-action {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary, #f8fafc);
+  border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.16));
+  padding: 5px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-gis-action:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+  color: #fff;
+}
+
+.btn-gis-action.gis-btn-copied {
+  background: rgba(34, 197, 94, 0.25) !important;
+  border-color: #22c55e !important;
+  color: #22c55e !important;
+}
+
+.btn-gis-action.btn-view-map {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #6ee7b7;
+}
+
+.btn-gis-action.btn-view-map:hover {
+  background: rgba(16, 185, 129, 0.3);
+  border-color: #34d399;
+  color: #fff;
+}
+
+.btn-gis-action.nav-link {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
+}
+
+.btn-gis-action.nav-link:hover {
+  background: rgba(59, 130, 246, 0.3);
+  color: #fff;
+}
+
+/* Vehicle Live Marker Pulse & Beacon */
+.emergency-vehicle-icon {
+  position: relative;
+  background: transparent;
+  border: none;
+}
+
+.vehicle-marker-pulse {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(239, 68, 68, 0.2);
+  border: 2px solid #ef4444;
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+}
+
+.vehicle-emoji {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.vehicle-beacon {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 10px;
+  height: 10px;
+  background: #38bdf8;
+  border-radius: 50%;
+  border: 1px solid #ffffff;
+  animation: beaconPulse 1.2s infinite ease-in-out;
+}
+
+@keyframes beaconPulse {
+  0% { transform: scale(0.9); opacity: 1; }
+  50% { transform: scale(1.6); opacity: 0.4; }
+  100% { transform: scale(0.9); opacity: 1; }
+}
+
+.vehicle-consent-notice {
+  font-size: 9px;
+  color: var(--text-muted, #94a3b8);
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 2px solid #38bdf8;
+  padding: 4px 6px;
+  margin: 6px 0;
+  line-height: 1.3;
+}
+
+/* Proximity Banner */
+.gis-proximity-banner {
+  display: none;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  color: #fef08a;
+  padding: 8px 14px;
+  margin: 8px 0;
+  border-radius: 6px;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.gis-proximity-banner.critical-prox {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.6);
+  color: #fca5a5;
+  animation: proxPulse 2s infinite ease-in-out;
+}
+
+@keyframes proxPulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(239, 68, 68, 0); }
+  50% { box-shadow: 0 0 16px rgba(239, 68, 68, 0.4); }
+}
+
+.gis-proximity-banner .prox-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.gis-proximity-banner .prox-text {
+  flex: 1;
+}
+
+.gis-proximity-banner .btn-dismiss-prox {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0 4px;
+  opacity: 0.7;
+}
+
+.gis-proximity-banner .btn-dismiss-prox:hover {
+  opacity: 1;
+}
+
+/* Light Mode Overrides for Precision Popups */
+[data-theme="light"] .precision-popup {
+  color: #0f172a;
+}
+[data-theme="light"] .precision-popup .popup-title {
+  color: #0f172a;
+}
+[data-theme="light"] .precision-popup .popup-val {
+  color: #0f172a;
+}
+[data-theme="light"] .popup-address-section {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+[data-theme="light"] .btn-gis-action {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+[data-theme="light"] .btn-gis-action:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* ==============================================================================
+   Enhanced Legend & Google Maps Base Indicator
+   ============================================================================== */
+.map-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(14, 23, 38, 0.95);
+  border-top: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.1));
+}
+
+.map-caption-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-secondary, #94a3b8);
+}
+
+.basemap-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.legend-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 18px;
+  font-size: 11px;
+}
+
+.legend-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.legend-group-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #64748b);
+  margin-right: 2px;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.swatch {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+}
+
+.swatch.low { background: #10b981; }
+.swatch.moderate { background: #eab308; }
+.swatch.high { background: #f97316; }
+.swatch.critical { background: #ef4444; }
+
+.swatch-road {
+  display: inline-block;
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.swatch-road.low { background: #10b981; }
+.swatch-road.moderate { background: #eab308; }
+.swatch-road.high { background: #f97316; }
+.swatch-road.critical { background: #ef4444; }
+
+.swatch-blocked-road {
+  display: inline-block;
+  width: 18px;
+  height: 3px;
+  border-top: 2px dashed #ef4444;
+}
+
+.legend-icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* ==============================================================================
+   Incident Markers (Landslide & Blocked Road)
+   ============================================================================== */
+.landslide-marker-container {
+  background: transparent !important;
+  border: none !important;
+}
+
+.marker-incident-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  transition: transform 0.15s ease;
+}
+
+.marker-incident-icon:hover {
+  transform: scale(1.2);
+}
+
+.blocked-road-icon {
+  width: 28px;
+  height: 28px;
+  background: rgba(239, 68, 68, 0.95);
+  border: 2px solid #ffffff;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.marker-badge-pulse {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 50%;
+  border: 2px solid #ef4444;
+  animation: pulseBlocked 1.6s infinite ease-out;
+  pointer-events: none;
+}
+
+@keyframes pulseBlocked {
+  0% { transform: scale(0.9); opacity: 1; }
+  70% { transform: scale(1.5); opacity: 0; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+.verified-landslide-icon {
+  width: 26px;
+  height: 26px;
+  background: #1e293b;
+  border: 2px solid #22c55e;
+  border-radius: 50%;
+  font-size: 12px;
+}
+
+.unverified-report-icon {
+  width: 24px;
+  height: 24px;
+  background: #1e293b;
+  border: 2px solid #f59e0b;
+  border-radius: 50%;
+  font-size: 11px;
+}
+
+.icon-status-dot {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  font-size: 8px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  border: 1px solid #0f172a;
+}
+
+.icon-status-dot.verified {
+  background: #22c55e;
+}
+
+.icon-status-dot.unverified {
+  background: #f59e0b;
+}
+
+/* Road Status Tags in Popups */
+.road-status-tag {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.road-status-tag.status-blocked {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid #ef4444;
+}
+
+.road-status-tag.status-restricted {
+  background: rgba(249, 115, 22, 0.2);
+  color: #fdba74;
+  border: 1px solid #f97316;
+}
+
+.road-status-tag.status-monitored,
+.road-status-tag.status-open {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+  border: 1px solid #10b981;
+}
+
+/* Verification Badge */
+.verification-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.verification-badge.is-verified {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.verification-badge.is-unverified {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fde047;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.precision-badge.verified-landslide {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.5);
+}
+
+.precision-badge.unverified-report {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fde047;
+  border: 1px solid rgba(245, 158, 11, 0.5);
+}
+
+.precision-badge.blocked {
+  background: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+  border: 1px solid #ef4444;
+}
+
+.precision-badge.critical {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+}
+
+.precision-badge.high {
+  background: rgba(249, 115, 22, 0.2);
+  color: #fdba74;
+  border: 1px solid rgba(249, 115, 22, 0.5);
+}
+
+.precision-badge.medium,
+.precision-badge.moderate {
+  background: rgba(234, 179, 8, 0.2);
+  color: #fde047;
+  border: 1px solid rgba(234, 179, 8, 0.5);
+}
+
+.precision-badge.low {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.5);
+}
+
+.unverified-warning-banner {
+  font-size: 11px;
+  line-height: 1.4;
+  color: #fef08a;
+  background: rgba(245, 158, 11, 0.12);
+  border-left: 3px solid #f59e0b;
+  padding: 6px 8px;
+  border-radius: 3px;
+  margin: 6px 0;
+}
+
+[data-theme="light"] .map-caption {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .legend-item {
+  color: #334155;
+}
+
+

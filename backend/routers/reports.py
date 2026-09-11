@@ -174,7 +174,7 @@ def upload_media(req: MediaUploadRequest):
 @router.get("", response_model=list[ReportOut])
 def list_reports(
     status: str | None = None,
-    limit: int = 50
+    limit: int = 100
 ):
     """List ground landslide reports submitted by citizens and field staff."""
     with get_db() as conn:

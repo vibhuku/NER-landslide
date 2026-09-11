@@ -1,6 +1,25 @@
 import { authService, monitoringService } from './services.js';
 import { riskColor } from './data.js';
 import { nerBoundaries } from './ner-boundaries.js';
+import { i18n } from './i18n.js';
+import { advancedFeatures } from './advanced-features.js';
+import {
+  formatCoordinates,
+  copyCoordinates,
+  zoomToExact,
+  getNavigationUrls,
+  renderRiskBuffer,
+  clearRiskBuffer,
+  highlightRoadSegment,
+  clearRoadSegmentHighlight,
+  vehicleTracker,
+  buildPrecisionPopup,
+  getRoadRiskColor,
+  getRoadDashArray,
+  buildRoadSegmentPopup,
+  createLandslideIcon,
+  buildLandslideIncidentPopup
+} from './precision-gis.js';
 
 const $ = (s) => document.querySelector(s);
 let map, boundaryLayer, markerLayer, rainfallLayer, soilMoistureLayer, slopeLayer, historyLayer, reportsLayer, roadsLayer, nerBounds, stateData = [];
@@ -41,16 +60,113 @@ function getBoundaryStyle(feature, isSelected = false) {
   };
 }
 
+let activeLocation = null;
 function showLocation(s) {
-  $('#locationDetail').innerHTML = `<div class="selected-place"><span class="pin" style="background:${riskColor[s.level]};box-shadow:0 0 0 3px rgba(255,255,255,0.15), 0 0 10px ${riskColor[s.level]};"></span><div><h2>${s.name}</h2><p>${s.short} · ${s.data_status || 'Demo'} assessment</p></div></div><div class="location-risk"><span>Risk score</span><strong>${s.score}<small>/100</small></strong><b class="risk-label ${levelClass(s.level)}">${s.level}</b></div><dl class="detail-grid"><div><dt>Rainfall (24h)</dt><dd>${s.rain} mm</dd></div><div><dt>Soil moisture</dt><dd>${s.soil}%</dd></div><div><dt>Avg. slope</dt><dd>${s.slope}</dd></div><div><dt>Elevation</dt><dd>${s.elevation}</dd></div></dl><div class="recent"><span>Recent information</span><p>${s.event}</p></div><div class="detail-bottom"><span>Last updated ${s.updated}</span><b>${s.alerts ? `${s.alerts} active alert${s.alerts > 1 ? 's' : ''}` : 'No active alerts'}</b></div>`;
+  if (!s) return;
+  activeLocation = s;
+  const translatedLevel = i18n.t('risk_' + s.level.toLowerCase()) || s.level;
+  const coordsFormatted = formatCoordinates(s.lat, s.lng);
+  const navUrls = getNavigationUrls(s.lat, s.lng);
+  const radius = (s.level === 'Critical') ? 500 : (s.level === 'High' ? 200 : 100);
+
+  if (map) {
+    renderRiskBuffer(map, s.lat, s.lng, s.level, radius);
+  }
+  vehicleTracker.setTarget(s.lat, s.lng, s.name);
+
+  $('#locationDetail').innerHTML = `
+    <div class="selected-place">
+      <span class="pin" style="background:${riskColor[s.level]};box-shadow:0 0 0 3px rgba(255,255,255,0.15), 0 0 10px ${riskColor[s.level]};"></span>
+      <div>
+        <h2>${s.name}</h2>
+        <p>${s.short} · ${s.data_status || 'Demo'} assessment</p>
+      </div>
+    </div>
+    <div class="location-risk">
+      <span>Risk score</span>
+      <strong>${s.score}<small>/100</small></strong>
+      <b class="risk-label ${levelClass(s.level)}">${translatedLevel}</b>
+    </div>
+
+    <div class="location-precision-strip">
+      <div class="precision-meta-row">
+        <span class="precision-meta-label">Coordinates</span>
+        <strong class="precision-meta-value">${coordsFormatted}</strong>
+      </div>
+      <div class="precision-meta-row">
+        <span class="precision-meta-label">Risk Zone</span>
+        <span class="precision-meta-value"><strong>${radius} m radius</strong> <small class="demo-tag">DEMO</small></span>
+      </div>
+      <div class="location-actions-row">
+        <button type="button" class="btn-location-action btn-zoom" onclick="window.neraGis.zoom(${s.lat}, ${s.lng}, 17)" title="Zoom map to exact coordinates">
+          <span class="action-icon" aria-hidden="true">🔍</span>
+          <span class="action-label">Zoom to Exact</span>
+        </button>
+        <button type="button" class="btn-location-action btn-copy" id="btnCopyLocDetail" onclick="window.neraGis.copy(${s.lat}, ${s.lng}, 'btnCopyLocDetail')" title="Copy coordinates to clipboard">
+          <span class="action-icon" aria-hidden="true">📋</span>
+          <span class="action-label">Copy Coordinates</span>
+        </button>
+        <button type="button" class="btn-location-action btn-view-map" id="btnLocDetailViewMap" onclick="window.neraGis.toggleFullscreenMap(true)" title="Open internal large map view">
+          <span class="action-icon" aria-hidden="true">🗺️</span>
+          <span class="action-label">View Map</span>
+        </button>
+        <a href="${navUrls.google}" target="_blank" rel="noopener" class="btn-location-action btn-nav" title="Open Google Maps turn-by-turn navigation">
+          <span class="action-icon" aria-hidden="true">🧭</span>
+          <span class="action-label">Navigate</span>
+        </a>
+      </div>
+    </div>
+
+    <dl class="detail-grid">
+      <div><dt>Rainfall (24h)</dt><dd>${s.rain} mm</dd></div>
+      <div><dt>Soil moisture</dt><dd>${s.soil}%</dd></div>
+      <div><dt>Avg. slope</dt><dd>${s.slope}</dd></div>
+      <div><dt>Elevation</dt><dd>${s.elevation}</dd></div>
+    </dl>
+    <div class="recent">
+      <span>Recent information</span>
+      <p>${s.event}</p>
+    </div>
+    <div class="detail-bottom">
+      <span>Last updated ${s.updated}</span>
+      <b>${s.alerts ? `${s.alerts} active alert${s.alerts > 1 ? 's' : ''}` : 'No active alerts'}</b>
+    </div>
+  `;
+  if (s && s.short) updatePredictionDisplay(s.short);
 }
 
 function popupContent(s) {
-  return `<div class="map-popup"><strong>${s.name}</strong><small>${s.data_status || 'DEMO / SIMULATED DATA'}</small><dl><div><dt>Risk level</dt><dd>${s.level} (${s.score}/100)</dd></div><div><dt>Rainfall</dt><dd>${s.rain} mm / 24h</dd></div><div><dt>Slope</dt><dd>${s.slope}</dd></div><div><dt>Soil moisture</dt><dd>${s.soil}%</dd></div><div><dt>Last updated</dt><dd>${s.updated}</dd></div></dl></div>`;
+  const rainWeight = Math.min(45, Math.max(15, Math.round((s.rain / 120) * 40)));
+  const soilWeight = Math.min(35, Math.max(15, Math.round((s.soil / 100) * 35)));
+  const slopeWeight = Math.max(10, 100 - rainWeight - soilWeight);
+  const radius = (s.level === 'Critical') ? 500 : (s.level === 'High' ? 200 : 100);
+
+  return buildPrecisionPopup({
+    title: s.name,
+    badgeText: s.data_status || 'AVAILABLE',
+    badgeType: s.data_status === 'LIVE' ? 'live' : 'available',
+    riskLevel: s.level,
+    riskScore: s.score,
+    lat: s.lat,
+    lng: s.lng,
+    radiusM: radius,
+    details: [
+      { label: 'Rainfall (24h)', value: `${s.rain} mm` },
+      { label: 'Slope Gradient', value: s.slope },
+      { label: 'Soil Moisture', value: `${s.soil}%` },
+      { label: 'Elevation', value: s.elevation },
+      { label: 'Last Updated', value: s.updated },
+      {
+        label: 'XAI Contribution',
+        value: `<span style="color:#38bdf8;font-size:10px;">Rain ${rainWeight}%</span> · <span style="color:#f59e0b;font-size:10px;">Soil ${soilWeight}%</span> · <span style="color:#c084fc;font-size:10px;">Slope ${slopeWeight}%</span>`
+      }
+    ]
+  });
 }
 
 function selectState(s) {
   showLocation(s);
+  updatePredictionDisplay(s.short);
   map.flyTo([s.lat, s.lng], 8.5, { duration: 0.7 });
   if (boundaryLayer) {
     boundaryLayer.eachLayer(layer => {
@@ -89,45 +205,57 @@ function setupCustomLayersControl(map, layersConfig) {
 
       panel.innerHTML = `
         <div class="nera-layers-group">
-          <div class="nera-layers-heading">BASEMAP</div>
+          <div class="nera-layers-heading">BASEMAP (GEOGRAPHIC BASE)</div>
           <label class="nera-layer-option">
-            <input type="radio" name="nera_basemap" value="osm" checked>
-            <span>OpenStreetMap Standard</span>
+            <input type="radio" name="nera_basemap" value="google_roadmap" checked>
+            <span>Google Maps (Standard)</span>
+          </label>
+          <label class="nera-layer-option">
+            <input type="radio" name="nera_basemap" value="google_terrain">
+            <span>Google Maps (Terrain)</span>
+          </label>
+          <label class="nera-layer-option">
+            <input type="radio" name="nera_basemap" value="osm">
+            <span>OpenStreetMap</span>
           </label>
         </div>
         <div class="nera-layers-group">
-          <div class="nera-layers-heading">NERA RISK &amp; MONITORING LAYERS</div>
+          <div class="nera-layers-heading" data-i18n="layer_panel_title">NERA RISK &amp; MONITORING LAYERS</div>
           <label class="nera-layer-option">
             <input type="checkbox" data-layer-key="boundary" ${layersConfig.boundary && map.hasLayer(layersConfig.boundary) ? 'checked' : ''}>
-            <span>NER State Boundaries</span>
+            <span data-i18n="layer_boundaries">NER State Boundaries</span>
           </label>
           <label class="nera-layer-option">
             <input type="checkbox" data-layer-key="risk" ${layersConfig.risk && map.hasLayer(layersConfig.risk) ? 'checked' : ''}>
-            <span>Landslide Risk</span>
+            <span data-i18n="layer_risk">Landslide Risk</span>
           </label>
           <label class="nera-layer-option">
             <input type="checkbox" data-layer-key="rain" ${layersConfig.rain && map.hasLayer(layersConfig.rain) ? 'checked' : ''}>
-            <span>Rainfall</span>
+            <span data-i18n="layer_rainfall">Rainfall</span>
           </label>
           <label class="nera-layer-option">
             <input type="checkbox" data-layer-key="moisture" ${layersConfig.moisture && map.hasLayer(layersConfig.moisture) ? 'checked' : ''}>
-            <span>Soil Moisture</span>
+            <span data-i18n="layer_soil_moisture">Soil Moisture</span>
           </label>
           <label class="nera-layer-option">
             <input type="checkbox" data-layer-key="slope" ${layersConfig.slope && map.hasLayer(layersConfig.slope) ? 'checked' : ''}>
-            <span>Slope</span>
+            <span data-i18n="layer_slope">Slope</span>
           </label>
           <label class="nera-layer-option">
             <input type="checkbox" data-layer-key="history" ${layersConfig.history && map.hasLayer(layersConfig.history) ? 'checked' : ''}>
-            <span>Historical Landslides</span>
+            <span data-i18n="layer_history">Historical Landslides</span>
           </label>
           <label class="nera-layer-option">
             <input type="checkbox" data-layer-key="reports" ${layersConfig.reports && map.hasLayer(layersConfig.reports) ? 'checked' : ''}>
-            <span>Community Reports</span>
+            <span data-i18n="layer_reports">Community Reports</span>
           </label>
           <label class="nera-layer-option">
             <input type="checkbox" data-layer-key="roads" ${layersConfig.roads && map.hasLayer(layersConfig.roads) ? 'checked' : ''}>
-            <span>Roads</span>
+            <span data-i18n="layer_roads">Roads</span>
+          </label>
+          <label class="nera-layer-option">
+            <input type="checkbox" data-layer-key="infra" ${layersConfig.infra && map.hasLayer(layersConfig.infra) ? 'checked' : ''}>
+            <span data-i18n="layer_infra">Critical Infrastructure</span>
           </label>
         </div>
       `;
@@ -164,6 +292,25 @@ function setupCustomLayersControl(map, layersConfig) {
               if (!map.hasLayer(targetLayer)) map.addLayer(targetLayer);
             } else {
               if (map.hasLayer(targetLayer)) map.removeLayer(targetLayer);
+            }
+          }
+        });
+      });
+
+      // Handle basemap selection
+      const basemapRadios = panel.querySelectorAll('input[name="nera_basemap"]');
+      basemapRadios.forEach(radio => {
+        L.DomEvent.on(radio, 'change', (e) => {
+          L.DomEvent.stopPropagation(e);
+          const val = radio.value;
+          if (layersConfig.basemaps) {
+            Object.values(layersConfig.basemaps).forEach(bm => {
+              if (bm && map.hasLayer(bm)) map.removeLayer(bm);
+            });
+            const activeBm = layersConfig.basemaps[val];
+            if (activeBm) {
+              activeBm.addTo(map);
+              if (activeBm.bringToBack) activeBm.bringToBack();
             }
           }
         });
@@ -232,20 +379,53 @@ function setupMap(data) {
   // Fit initial viewport strictly to the NER geographic extent with smooth fractional zoom
   map.fitBounds(nerBounds, { padding: [16, 16], maxZoom: 8 });
 
-  // OpenStreetMap Standard Basemap (100% open, zero API key, no watermark)
-  const baseMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  // Base geographic map: Google Maps layer (with terrain and OSM options)
+  const googleRoadmap = L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+    maxZoom: 20,
+    subdomains: ['0', '1', '2', '3'],
+    attribution: '&copy; Google Maps | NER Boundaries: Survey of India / <a href="https://github.com/datameet/maps" target="_blank">DataMeet</a>'
+  });
+  const googleTerrain = L.tileLayer('https://mt{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
+    maxZoom: 20,
+    subdomains: ['0', '1', '2', '3'],
+    attribution: '&copy; Google Maps | NER Boundaries: Survey of India / <a href="https://github.com/datameet/maps" target="_blank">DataMeet</a>'
+  });
+  const osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> | NER Boundaries: Survey of India / <a href="https://github.com/datameet/maps" target="_blank">DataMeet</a> (CC-BY 4.0)'
-  }).addTo(map);
-
-  baseMap.on('tileerror', () => {
-    console.warn('An OpenStreetMap tile could not be loaded; Leaflet will retry.');
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> | NER Boundaries: Survey of India / <a href="https://github.com/datameet/maps" target="_blank">DataMeet</a>'
   });
 
-  // Dedicated Leaflet Pane for Authoritative Boundaries (below markers, above basemap)
+  // Keep Google Maps strictly as the base geographic map
+  const baseMap = googleRoadmap.addTo(map);
+
+  googleRoadmap.on('tileerror', () => {
+    console.warn('A Google Maps tile could not be loaded; Leaflet will retry or fallback.');
+  });
+
+  // Dedicated Leaflet Panes with explicit z-index hierarchy ensuring overlays stay above Google Maps basemap:
+  // z-index 200: tilePane (Google Maps raster basemap)
+  // z-index 350: nerBoundariesPane (authoritative 8-state boundaries)
+  // z-index 380: riskZonesPane (Landslide Risk Zone hazard perimeter circles)
+  // z-index 450: roadsPane (Road-risk segments & blocked dashed lines)
+  // z-index 550: markersPane (Risk centroid circleMarkers)
+  // z-index 600: markerPane (Verified landslide & unverified incident markers)
+  // z-index 650: tooltipPane
+  // z-index 700: popupPane
   if (!map.getPane('nerBoundariesPane')) {
     map.createPane('nerBoundariesPane');
     map.getPane('nerBoundariesPane').style.zIndex = 350;
+  }
+  if (!map.getPane('riskZonesPane')) {
+    map.createPane('riskZonesPane');
+    map.getPane('riskZonesPane').style.zIndex = 380;
+  }
+  if (!map.getPane('roadsPane')) {
+    map.createPane('roadsPane');
+    map.getPane('roadsPane').style.zIndex = 450;
+  }
+  if (!map.getPane('markersPane')) {
+    map.createPane('markersPane');
+    map.getPane('markersPane').style.zIndex = 550;
   }
 
   // Load authoritative 8-state NER boundary dataset (Survey of India / DataMeet GIS)
@@ -265,14 +445,14 @@ function setupMap(data) {
                 color: isLight ? '#1e40af' : '#7dd3fc',
                 fillOpacity: isLight ? 0.2 : 0.25
               });
-              if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-                l.bringToFront();
-              }
             },
             mouseout: (e) => {
-              boundaryLayer.resetStyle(e.target);
+              const stateName = feature.properties.name;
+              const isSelected = activeLocation && (activeLocation.name.toLowerCase() === stateName.toLowerCase() || activeLocation.short === feature.properties.state_code);
+              e.target.setStyle(getBoundaryStyle(feature, isSelected));
             },
-            click: () => {
+            click: (e) => {
+              if ($('#reportModal') && $('#reportModal').classList.contains('active')) return;
               const stateName = feature.properties.name;
               const matchingState = stateData.find(s => s.name.toLowerCase() === stateName.toLowerCase() || s.short === feature.properties.state_code);
               if (matchingState) selectState(matchingState);
@@ -298,40 +478,128 @@ function setupMap(data) {
     console.warn('[NERA Map] Authoritative NER 8-state boundary dataset is missing or unavailable. Map running in baseline mode without boundary layer.');
   }
 
-  // Default state: Landslide Risk = ON, Others = OFF
+  // Core disaster monitoring layers active by default on top of Google Maps
   markerLayer = L.layerGroup().addTo(map);
+  roadsLayer = L.layerGroup().addTo(map);
+  reportsLayer = L.layerGroup().addTo(map);
+
+  // Environmental & analytical layers (selectable via Layers control)
   rainfallLayer = L.layerGroup();
   soilMoistureLayer = L.layerGroup();
   slopeLayer = L.layerGroup();
   historyLayer = L.layerGroup();
-  reportsLayer = L.layerGroup();
-  roadsLayer = L.layerGroup();
+
+  // Color mapping: Green = Low, Yellow = Medium/Moderate, Orange = High, Red = Critical
+  const riskPalette = {
+    Low: '#10b981',
+    Medium: '#eab308',
+    Moderate: '#eab308',
+    High: '#f97316',
+    Critical: '#ef4444'
+  };
 
   data.forEach(s => {
+    const zoneColor = riskPalette[s.level] || riskColor[s.level] || '#eab308';
+
+    // 1. Landslide Risk Zone (calibrated hazard perimeter circle on Google Maps)
+    const zoneRadiusM = (s.level === 'Critical') ? 42000 : (s.level === 'High' ? 32000 : (s.level === 'Moderate' || s.level === 'Medium' ? 22000 : 15000));
+    const zoneCircle = L.circle([s.lat, s.lng], {
+      radius: zoneRadiusM,
+      color: zoneColor,
+      weight: 2,
+      dashArray: '6, 6',
+      fillColor: zoneColor,
+      fillOpacity: 0.18,
+      pane: 'riskZonesPane'
+    }).bindTooltip(`
+      <div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:700;">
+        ${escapeHtml(s.name)} Landslide Risk Zone
+        <br><span style="color:${zoneColor};">${s.level} Risk (${s.score}/100)</span>
+      </div>
+    `, { direction: 'top' });
+
+    // 2. Risk Centroid Marker with permanent identification label
     const marker = L.circleMarker([s.lat, s.lng], {
-      radius: 11 + s.score / 14,
+      radius: 12 + s.score / 14,
       color: '#ffffff',
-      weight: 1.5,
-      fillColor: riskColor[s.level],
-      fillOpacity: 0.9
+      weight: 2,
+      fillColor: zoneColor,
+      fillOpacity: 0.95,
+      pane: 'markersPane'
     })
-      .bindTooltip(`${s.name} (${s.score})`, {
+      .bindTooltip(`
+        <div style="font-weight:800;font-size:11px;">${s.short} · ${s.score}<small>/100</small></div>
+      `, {
         direction: 'top',
         permanent: true,
         className: 'state-map-label',
-        offset: [0, -12]
+        offset: [0, -14]
       })
-      .bindPopup(popupContent(s), { maxWidth: 260 });
-    marker.on('click', () => showLocation(s));
+      .bindPopup(popupContent(s), { maxWidth: 290 });
+
+    const onSelectNode = () => {
+      showLocation(s);
+      renderRiskBuffer(map, s.lat, s.lng, s.level, (s.level === 'Critical' ? 500 : (s.level === 'High' ? 200 : 100)));
+    };
+
+    marker.on('click', onSelectNode);
+    zoneCircle.on('click', () => {
+      onSelectNode();
+      marker.openPopup();
+    });
+
     marker.addTo(markerLayer);
+    zoneCircle.addTo(markerLayer);
+
+    // Analytical layers population:
+    L.circleMarker([s.lat, s.lng], {
+      radius: Math.min(26, Math.max(10, Math.round(s.rain / 5))),
+      color: '#38bdf8',
+      weight: 1.5,
+      fillColor: '#0284c7',
+      fillOpacity: 0.45,
+      pane: 'overlayPane'
+    }).bindTooltip(`${escapeHtml(s.name)}: ${s.rain} mm (24h Rainfall)`).addTo(rainfallLayer);
+
+    L.circleMarker([s.lat, s.lng], {
+      radius: Math.min(26, Math.max(10, Math.round(s.soil / 4))),
+      color: '#fbbf24',
+      weight: 1.5,
+      fillColor: '#d97706',
+      fillOpacity: 0.45,
+      pane: 'overlayPane'
+    }).bindTooltip(`${escapeHtml(s.name)}: ${s.soil}% Soil Moisture`).addTo(soilMoistureLayer);
+
+    L.circleMarker([s.lat, s.lng], {
+      radius: 14,
+      color: '#c084fc',
+      weight: 1.5,
+      fillColor: '#7c3aed',
+      fillOpacity: 0.45,
+      pane: 'overlayPane'
+    }).bindTooltip(`${escapeHtml(s.name)}: ${s.slope} Avg. Slope Gradient`).addTo(slopeLayer);
 
     if (s.event !== 'No new landslide record') {
-      L.marker([s.lat + 0.12, s.lng + 0.15], { icon: L.divIcon({ className: 'history-marker', html: '<span style="color:#ef4444;font-size:16px;text-shadow:0 0 4px rgba(0,0,0,0.9);">▲</span>', iconSize: [16, 16] }) }).bindTooltip(`Historical/reference: ${s.event}`).addTo(historyLayer);
+      L.marker([s.lat + 0.12, s.lng + 0.15], {
+        icon: L.divIcon({
+          className: 'history-marker',
+          html: '<span style="color:#ef4444;font-size:16px;text-shadow:0 0 4px rgba(0,0,0,0.9);">▲</span>',
+          iconSize: [16, 16]
+        }),
+        pane: 'markerPane'
+      }).bindTooltip(`Historical/reference: ${s.event}`).addTo(historyLayer);
     }
   });
 
+  const basemaps = {
+    google_roadmap: googleRoadmap,
+    google_terrain: googleTerrain,
+    osm: osmStandard
+  };
+
   const layers = {
     baseMap,
+    basemaps,
     boundary: boundaryLayer,
     risk: markerLayer,
     rain: rainfallLayer,
@@ -341,6 +609,10 @@ function setupMap(data) {
     reports: reportsLayer,
     roads: roadsLayer
   };
+
+  window.map = map;
+  advancedFeatures.init(map);
+  layers.infra = advancedFeatures.infraLayerGroup;
 
   setupCustomLayersControl(map, layers);
 
@@ -364,6 +636,8 @@ function setupMap(data) {
 
   $('#resetMap').onclick = () => {
     map.fitBounds(nerBounds, { duration: 0.7, padding: [16, 16] });
+    clearRiskBuffer(map);
+    clearRoadSegmentHighlight(map);
     if (boundaryLayer) {
       boundaryLayer.eachLayer(layer => {
         if (layer.feature) {
@@ -376,8 +650,43 @@ function setupMap(data) {
   window.addEventListener('resize', () => map.invalidateSize());
 }
 
+export function toggleNeraFullscreenMap(enable) {
+  const mapLayout = document.getElementById('mapLayoutContainer') || document.querySelector('.map-layout');
+  const topbar = document.getElementById('mapFullscreenTopBar');
+  if (!mapLayout) return;
+
+  const isCurrentlyActive = mapLayout.classList.contains('map-fullscreen-active');
+  const shouldEnable = enable !== undefined ? Boolean(enable) : !isCurrentlyActive;
+
+  if (shouldEnable) {
+    mapLayout.classList.add('map-fullscreen-active');
+    if (topbar) topbar.style.display = 'flex';
+    document.body.classList.add('map-modal-open');
+  } else {
+    mapLayout.classList.remove('map-fullscreen-active');
+    if (topbar) topbar.style.display = 'none';
+    document.body.classList.remove('map-modal-open');
+  }
+
+  // Trigger Leaflet map resize after DOM settles
+  setTimeout(() => {
+    if (map && typeof map.invalidateSize === 'function') {
+      map.invalidateSize();
+    }
+  }, 100);
+  setTimeout(() => {
+    if (map && typeof map.invalidateSize === 'function') {
+      map.invalidateSize();
+    }
+  }, 300);
+}
+window.toggleNeraFullscreenMap = toggleNeraFullscreenMap;
+
 function renderTable(data) {
-  $('#stateTable').innerHTML = data.map(s => `<tr tabindex="0" data-state="${s.short}"><td><strong>${s.name}</strong></td><td><span class="tag ${levelClass(s.level)}-tag">${s.level}</span></td><td>${s.score}</td><td>${s.rain} mm</td><td>${s.alerts || '—'}</td><td>${s.updated}</td></tr>`).join('');
+  $('#stateTable').innerHTML = data.map(s => {
+    const translatedLevel = i18n.t('risk_' + s.level.toLowerCase()) || s.level;
+    return `<tr tabindex="0" data-state="${s.short}"><td><strong>${s.name}</strong></td><td><span class="tag ${levelClass(s.level)}-tag">${translatedLevel}</span></td><td>${s.score}</td><td>${s.rain} mm</td><td>${s.alerts || '—'}</td><td>${s.updated}</td></tr>`;
+  }).join('');
   document.querySelectorAll('#stateTable tr').forEach(row => {
     const select = () => selectState(data.find(s => s.short === row.dataset.state));
     row.onclick = select;
@@ -389,22 +698,33 @@ function renderBars(data) {
   $('#stateBars').innerHTML = data.slice().sort((a, b) => b.score - a.score).map(s => `<div><label>${s.short}<span>${s.score}</span></label><i><b style="width:${s.score}%;background:${riskColor[s.level]}"></b></i></div>`).join('');
 }
 
+let alertsData = [];
 function renderAlerts(items) {
-  $('#alertCount').textContent = String(items.length).padStart(2, '0');
-  if (!items.length) {
-    $('#alertList').innerHTML = '<p style="padding:10px 0;color:var(--slate);font-size:11px;">No active alerts at this time.</p>';
+  alertsData = items || [];
+  $('#alertCount').textContent = String(alertsData.length).padStart(2, '0');
+  if (!alertsData.length) {
+    $('#alertList').innerHTML = `<p style="padding:10px 0;color:var(--slate);font-size:11px;">${i18n.t('no_active_alerts')}</p>`;
     return;
   }
-  $('#alertList').innerHTML = items.map(a => `<div class="alert-item"><span class="alert-indicator ${a.level.toLowerCase()}"></span><div><div><strong>${a.location}, ${a.state}</strong><span>${a.time}</span></div><p>${a.reason}</p><small><b>Action:</b> ${a.action}</small></div><em>${a.level}</em></div>`).join('');
+  $('#alertList').innerHTML = alertsData.map(a => {
+    const translatedLevel = i18n.t('risk_' + a.level.toLowerCase()) || a.level;
+    return `<div class="alert-item"><span class="alert-indicator ${a.level.toLowerCase()}"></span><div><div><strong>${a.location}, ${a.state}</strong><span>${a.time}</span></div><p>${a.reason}</p><small><b>Action:</b> ${a.action}</small></div><em>${translatedLevel}</em></div>`;
+  }).join('');
 }
 
 function openReportViewer(title, eyebrow, contentHtml, dataStatus) {
   const modal = $('#reportViewerModal');
   if (!modal) return;
+  const user = authService.getUser();
+  const isPrivileged = user && (user.role === 'officer' || user.role === 'admin');
+
   $('#reportViewerTitle').textContent = title;
   $('#reportViewerEyebrow').textContent = eyebrow;
   $('#reportViewerContent').innerHTML = contentHtml;
-  $('#reportViewerStatusBadge').textContent = dataStatus || 'Demo / Data source not connected';
+  $('#reportViewerStatusBadge').textContent = isPrivileged
+    ? `OFFICER VIEW: ${dataStatus || 'Regional Register'}`
+    : (dataStatus || 'Public Summary Assessment');
+
   modal.classList.add('active');
   modal.setAttribute('aria-hidden', 'false');
 }
@@ -487,7 +807,7 @@ async function loadCommunityReports() {
         </div>
         <p style="margin:6px 0;color:var(--text-secondary);line-height:1.4;">${escapeHtml(r.description)}</p>
         <div style="display:flex;justify-content:space-between;align-items:center;color:var(--text-muted);font-size:10px;font-family:'DM Mono',monospace;">
-          <span>By: ${escapeHtml(r.citizen_name || 'Anonymous')} · GPS: ${r.lat.toFixed(3)}, ${r.lng.toFixed(3)}</span>
+          <span style="display:flex;align-items:center;gap:6px;">By: ${escapeHtml(r.citizen_name || 'Anonymous')} ${r.status === 'verified' ? '<span class="badge-role" style="font-size:9px;background:#22c55e22;color:#22c55e;">🏅 Trusted Reporter</span>' : '<span class="badge-role" style="font-size:9px;background:#f59e0b22;color:#f59e0b;">🌱 Verified Citizen</span>'} · GPS: ${r.lat.toFixed(3)}, ${r.lng.toFixed(3)}</span>
           <span>${dateFormatted}</span>
         </div>
         ${r.media_url ? `<div style="margin-top:5px;"><a href="${escapeHtml(r.media_url)}" target="_blank" style="color:var(--accent-blue);font-size:11px;font-weight:700;">📷 View Attached Photo</a></div>` : ''}
@@ -502,26 +822,20 @@ async function loadCommunityReports() {
     `;
   }).join('');
 
-  // Add markers to reportsLayer
+  // Add markers to reportsLayer with landslide incident icons & grounded verification popups
   reports.forEach(r => {
     const isVerified = r.status === 'verified';
-    const markerColor = isVerified ? '#216646' : '#d66c26';
-    const locName = r.location ? `${r.location}${r.state ? `, ${r.state}` : ''}` : `GPS ${r.lat.toFixed(3)}, ${r.lng.toFixed(3)}`;
-    const marker = L.circleMarker([r.lat, r.lng], {
-      radius: 8,
-      color: '#fff',
-      weight: 2,
-      fillColor: markerColor,
-      fillOpacity: 0.9
-    }).bindTooltip(`Report: ${r.incident_type} (${r.status})`, { direction: 'top' })
-      .bindPopup(`
-        <div class="map-popup">
-          <strong>${escapeHtml(r.incident_type)} (Report)</strong>
-          <small>Status: ${r.status.toUpperCase()} · ${escapeHtml(locName)}</small>
-          <p style="font-size:11px;margin:5px 0;">${escapeHtml(r.description)}</p>
-          <div style="font-size:10px;color:var(--text-muted);">Reported by: ${escapeHtml(r.citizen_name)}</div>
-        </div>
-      `);
+    const isBlocked = isVerified && (
+      (r.road_impact && r.road_impact.toLowerCase().includes('block')) ||
+      ((r.description || '').toLowerCase().includes('impassable')) ||
+      ((r.incident_type || '').toLowerCase().includes('blockage'))
+    );
+    const icon = createLandslideIcon(isVerified, isBlocked);
+    const popupHtml = buildLandslideIncidentPopup(r);
+
+    const marker = L.marker([r.lat, r.lng], { icon, pane: 'markerPane' })
+      .bindTooltip(`${isVerified ? '✓ Verified Landslide' : '⚠️ Unverified Report'}: ${escapeHtml(r.incident_type)}`, { direction: 'top' })
+      .bindPopup(popupHtml, { maxWidth: 320 });
     marker.addTo(reportsLayer);
   });
 
@@ -601,33 +915,137 @@ async function loadHistorical() {
 }
 
 async function loadRoads() {
-  const roads = await monitoringService.getRoads();
+  let roads = await monitoringService.getRoadSegments();
+  if (!roads || !roads.length) {
+    roads = await monitoringService.getRoads();
+  }
   roadsLayer.clearLayers();
   if (!roads || !roads.length) return;
 
+  if (map && !map.hasLayer(roadsLayer)) {
+    map.addLayer(roadsLayer);
+  }
+
   roads.forEach(r => {
-    const statusColor = r.status === 'BLOCKED' ? '#ef4444' : r.status === 'RESTRICTED' ? '#f97316' : '#3b82f6';
+    const statusColor = getRoadRiskColor(r);
+    const dashPattern = getRoadDashArray(r);
+    const isBlocked = r.is_blocked || (r.road_status === 'BLOCKED') || (r.status === 'BLOCKED');
+
+    // If verified segment geometry exists (e.g. NH-10 km 42.3–45.1), draw corridor stretch
+    if (r.start_lat && r.start_lng && r.end_lat && r.end_lng) {
+      const segmentLine = L.polyline([
+        [r.start_lat, r.start_lng],
+        [r.end_lat, r.end_lng]
+      ], {
+        color: statusColor,
+        weight: isBlocked ? 6 : 5,
+        opacity: 0.95,
+        dashArray: dashPattern,
+        pane: map && map.getPane('roadsPane') ? 'roadsPane' : 'overlayPane'
+      });
+      const kmLabel = r.segment_km_start != null && r.segment_km_end != null
+        ? `km ${r.segment_km_start}–${r.segment_km_end}`
+        : `${r.vulnerable_stretch_km} km`;
+      segmentLine.bindTooltip(`Stretch: ${r.highway_code} (${kmLabel})${isBlocked ? ' [BLOCKED]' : ''}`);
+      segmentLine.bindPopup(buildRoadSegmentPopup(r), { maxWidth: 320 });
+      segmentLine.on('click', () => highlightRoadSegment(map, r));
+      segmentLine.addTo(roadsLayer);
+    }
+
+    const popupHtml = buildRoadSegmentPopup(r);
+
     const marker = L.circleMarker([r.lat, r.lng], {
-      radius: 8,
-      color: '#ffffff',
-      weight: 1.5,
+      radius: isBlocked ? 10 : 8,
+      color: isBlocked ? '#ef4444' : '#ffffff',
+      weight: isBlocked ? 3 : 1.5,
       fillColor: statusColor,
-      fillOpacity: 0.9
-    }).bindTooltip(`${r.highway_code}: ${r.name} (${r.status})`, { direction: 'top' })
-      .bindPopup(`
-        <div class="map-popup">
-          <strong>${r.highway_code} · ${r.name}</strong>
-          <small>HIGHWAY CORRIDOR · ${r.status}</small>
-          <dl>
-            <div><dt>State</dt><dd>${r.state_code}</dd></div>
-            <div><dt>Vulnerable Stretch</dt><dd>${r.vulnerable_stretch_km} km</dd></div>
-            <div><dt>Elevation</dt><dd>${r.elevation_m} m</dd></div>
-            <div><dt>Status</dt><dd><span style="color:${statusColor};font-weight:700;">${r.status}</span></dd></div>
-          </dl>
-        </div>
-      `, { maxWidth: 260 });
+      fillOpacity: 0.95,
+      pane: map && map.getPane('roadsPane') ? 'roadsPane' : 'overlayPane'
+    }).bindTooltip(`${r.highway_code}: ${r.name} (${isBlocked ? 'BLOCKED' : (r.risk_level || r.status || 'Monitored')})`, { direction: 'top' })
+      .bindPopup(popupHtml, { maxWidth: 320 });
+
+    marker.on('click', () => {
+      highlightRoadSegment(map, r);
+    });
+
     marker.addTo(roadsLayer);
   });
+}
+
+let lastRegionalStatus = null;
+
+function renderRegionalStatus(reg) {
+  if (!reg) return;
+  lastRegionalStatus = reg;
+  const elAss = $('#regAssessment');
+  if (elAss) {
+    const dotClass = (reg.regional_assessment || '').toLowerCase().includes('critical') ? 'critical'
+      : (reg.regional_assessment || '').toLowerCase().includes('elevated') ? 'high' : 'moderate';
+    elAss.innerHTML = `<em class="dot ${dotClass}"></em>${escapeHtml(reg.regional_assessment)}`;
+  }
+  const elDist = $('#regDistricts');
+  if (elDist) elDist.textContent = `${reg.districts_attention_count} ${i18n.t('strip_districts_attention') || 'districts require attention'}`;
+  const elHigh = $('#regHighRisk');
+  if (elHigh) elHigh.textContent = String(reg.high_risk_locations_count).padStart(2, '0');
+  const elRain = $('#regRainStatus');
+  if (elRain) elRain.textContent = reg.rainfall_status;
+  const elAnom = $('#regRainAnomaly');
+  if (elAnom) elAnom.textContent = reg.rainfall_anomaly_24h;
+  const elFresh = $('#regFreshness');
+  if (elFresh) elFresh.textContent = `${reg.data_freshness_min} min`;
+  const elMode = $('#dataFreshnessMode');
+  if (elMode) elMode.textContent = i18n.t('strip_data_simulated') || reg.data_mode;
+}
+
+async function updatePredictionDisplay(stateCode = 'ML') {
+  try {
+    const res = await monitoringService.getStatePrediction(stateCode);
+    if (!res) return;
+    const scoreVal = $('#predictionScoreVal');
+    if (scoreVal) scoreVal.textContent = res.risk_score;
+    const levelTag = $('#predictionLevelTag');
+    if (levelTag) {
+      levelTag.textContent = res.risk_level.toUpperCase();
+      levelTag.className = `gauge-level tag ${levelClass(res.risk_level)}-tag`;
+    }
+    const gaugeFill = $('#predictionGaugeFill');
+    if (gaugeFill) {
+      const circumference = 301.6;
+      const offset = circumference - (res.risk_score / 100) * circumference;
+      gaugeFill.style.strokeDasharray = `${circumference}`;
+      gaugeFill.style.strokeDashoffset = `${offset}`;
+    }
+    const pin = $('#predictionScalePin');
+    if (pin) pin.style.left = `${Math.min(95, Math.max(5, res.risk_score))}%`;
+  } catch (err) {
+    console.warn('[NERA] Prediction update fallback:', err);
+  }
+}
+
+async function updateAnalyticsSummary() {
+  try {
+    const data = await monitoringService.getAnalyticsSummary();
+    if (!data || !data.weather_environment) return;
+    const w = data.weather_environment;
+    const metricsEl = document.querySelector('.panel.environment .metrics');
+    if (metricsEl) {
+      metricsEl.innerHTML = `
+        <div><span>Rainfall</span><strong>${w.rainfall_24h_mm} <small>mm</small></strong><b>${escapeHtml(w.rainfall_anomaly)}</b></div>
+        <div><span>Soil moisture</span><strong>${w.soil_moisture_pct}<small>%</small></strong><b>${escapeHtml(w.soil_moisture_label)}</b></div>
+        <div><span>Temperature</span><strong>${w.temperature_celsius}<small>°C</small></strong><b>${escapeHtml(w.temperature_label)}</b></div>
+        <div><span>Humidity</span><strong>${w.humidity_pct}<small>%</small></strong><b>${escapeHtml(w.humidity_label)}</b></div>
+      `;
+    }
+    const barChart = document.querySelector('.bar-chart');
+    if (barChart && data.rainfall_accumulation_7day) {
+      barChart.innerHTML = data.rainfall_accumulation_7day.map((d, i, arr) => {
+        const isCurrent = i === arr.length - 1 ? ' class="current"' : '';
+        return `<i style="height:${d.pct}%"${isCurrent} title="${d.day}: ${d.mm}mm"></i>`;
+      }).join('');
+    }
+  } catch (err) {
+    console.warn('[NERA] Analytics update fallback:', err);
+  }
 }
 
 let firebaseInitialized = false;
@@ -641,7 +1059,7 @@ async function initFirebaseAuth() {
     return false;
   }
   const config = await authService.getFirebaseConfig();
-  if (!config || !config.apiKey || !config.projectId) {
+  if (!config || !config.apiKey || !config.projectId || config.apiKey.includes('placeholder') || config.projectId.includes('placeholder')) {
     console.warn('Firebase configuration is incomplete or unavailable in environment.');
     return false;
   }
@@ -677,12 +1095,12 @@ async function handleGoogleSignIn() {
     const ready = await initFirebaseAuth();
     if (!ready) {
       console.warn('Google sign-in unavailable: Firebase configuration not set in environment.');
-      const unavailableMsg = 'Google sign-in is currently unavailable. Please try again later.';
+      const unavailableMsg = 'Google Sign-In is currently in setup mode. Please sign in using your email and password below.';
       const authModal = $('#authModal');
       const isAuthModalOpen = authModal && authModal.classList.contains('active');
       if (isAuthModalOpen && errorEl) {
         errorEl.className = 'auth-notice-msg';
-        errorEl.textContent = unavailableMsg;
+        errorEl.innerHTML = '<strong>Notice:</strong> Google Sign-In is currently in setup mode. Please sign in using your email and password below.';
         errorEl.style.display = 'block';
       } else {
         alert(unavailableMsg);
@@ -876,6 +1294,42 @@ function initEventHandlers() {
     reportModal.setAttribute('aria-hidden', 'true');
   };
 
+  // View All Alerts Scroll Handler
+  const btnViewAllAlerts = $('#btnViewAllAlerts');
+  if (btnViewAllAlerts) {
+    btnViewAllAlerts.onclick = () => {
+      const alertSection = $('#alerts');
+      if (alertSection) alertSection.scrollIntoView({ behavior: 'smooth' });
+    };
+  }
+
+  // Full-Screen Risk Map Controls
+  const btnHeroViewMap = $('#btnHeroViewMap');
+  if (btnHeroViewMap) {
+    btnHeroViewMap.onclick = (e) => {
+      e.preventDefault();
+      toggleNeraFullscreenMap(true);
+    };
+  }
+
+  const btnToolbarViewMap = $('#btnToolbarViewMap');
+  if (btnToolbarViewMap) {
+    btnToolbarViewMap.onclick = (e) => {
+      e.preventDefault();
+      toggleNeraFullscreenMap(true);
+    };
+  }
+
+  const btnExitMapFullscreen = $('#btnExitMapFullscreen');
+  if (btnExitMapFullscreen) {
+    btnExitMapFullscreen.onclick = () => toggleNeraFullscreenMap(false);
+  }
+
+  const btnCloseMapFullscreen = $('#btnCloseMapFullscreen');
+  if (btnCloseMapFullscreen) {
+    btnCloseMapFullscreen.onclick = () => toggleNeraFullscreenMap(false);
+  }
+
   // Auth Modal Open / Close
   $('#btnOpenAuth').onclick = () => {
     updateAuthUI();
@@ -892,6 +1346,208 @@ function initEventHandlers() {
     authModal.classList.remove('active');
     authModal.setAttribute('aria-hidden', 'true');
   };
+
+  if (authModal) {
+    authModal.onclick = (e) => {
+      if (e.target === authModal) {
+        authModal.classList.remove('active');
+        authModal.setAttribute('aria-hidden', 'true');
+      }
+    };
+  }
+
+  if (reportModal) {
+    reportModal.onclick = (e) => {
+      if (e.target === reportModal) {
+        reportModal.classList.remove('active');
+        reportModal.setAttribute('aria-hidden', 'true');
+      }
+    };
+  }
+
+  // --- Emergency Alert Modal Flow ---
+  const emergencyModal = $('#emergencyModal');
+  const btnEmergency = $('#btnEmergencyCall');
+  const btnCloseEmergency = $('#btnCloseEmergencyModal');
+  const btnCancelEmergency = $('#btnCancelEmergency');
+  const btnConfirmEmergency = $('#btnConfirmEmergency');
+  const emergencyCoordsDisplay = $('#emergencyCoordsDisplay');
+  const emergencyRegionDisplay = $('#emergencyRegionDisplay');
+  const emergencyLocStatus = $('#emergencyLocationStatus');
+  const emergencyStatusMsg = $('#emergencyStatusMessage');
+  const emergencySpinner = $('#btnConfirmEmergencySpinner');
+  const emergencyConfirmText = $('#btnConfirmEmergencyText');
+
+  let currentEmergencyCoords = null;
+
+  function closeEmergencyModal() {
+    if (emergencyModal) {
+      emergencyModal.classList.remove('active');
+      emergencyModal.setAttribute('aria-hidden', 'true');
+    }
+  }
+
+  function openEmergencyModal() {
+    if (!emergencyModal) return;
+
+    if (emergencyStatusMsg) {
+      emergencyStatusMsg.style.display = 'none';
+      emergencyStatusMsg.className = '';
+      emergencyStatusMsg.innerHTML = '';
+    }
+
+    if (btnConfirmEmergency) {
+      btnConfirmEmergency.disabled = false;
+    }
+    if (emergencySpinner) emergencySpinner.style.display = 'none';
+    if (emergencyConfirmText) emergencyConfirmText.textContent = i18n.t('btn_confirm_emergency') || 'Confirm Emergency';
+
+    // 1. Initial coordinates from active state or map center
+    if (activeLocation && activeLocation.lat && activeLocation.lng) {
+      currentEmergencyCoords = {
+        lat: parseFloat(activeLocation.lat),
+        lng: parseFloat(activeLocation.lng),
+        state: activeLocation.name || activeLocation.short || 'North Eastern Region',
+        location: `${activeLocation.name} (${formatCoordinates(activeLocation.lat, activeLocation.lng)})`
+      };
+      if (emergencyCoordsDisplay) emergencyCoordsDisplay.textContent = formatCoordinates(activeLocation.lat, activeLocation.lng);
+      if (emergencyRegionDisplay) emergencyRegionDisplay.textContent = activeLocation.name || 'North Eastern Region';
+      if (emergencyLocStatus) {
+        emergencyLocStatus.textContent = 'Selected Region';
+        emergencyLocStatus.style.background = 'rgba(56, 189, 248, 0.2)';
+        emergencyLocStatus.style.color = '#38bdf8';
+      }
+    } else if (typeof map !== 'undefined' && map && map.getCenter) {
+      const center = map.getCenter();
+      currentEmergencyCoords = {
+        lat: parseFloat(center.lat.toFixed(4)),
+        lng: parseFloat(center.lng.toFixed(4)),
+        state: 'North Eastern Region',
+        location: `NER Grid (${formatCoordinates(center.lat, center.lng)})`
+      };
+      if (emergencyCoordsDisplay) emergencyCoordsDisplay.textContent = formatCoordinates(center.lat, center.lng);
+      if (emergencyRegionDisplay) emergencyRegionDisplay.textContent = 'North Eastern Region';
+      if (emergencyLocStatus) {
+        emergencyLocStatus.textContent = 'Map Centered';
+        emergencyLocStatus.style.background = 'rgba(251, 191, 36, 0.2)';
+        emergencyLocStatus.style.color = '#fbbf24';
+      }
+    } else {
+      currentEmergencyCoords = {
+        lat: 27.3389,
+        lng: 88.6060,
+        state: 'Sikkim',
+        location: 'Sikkim (27.3389° N, 88.6060° E)'
+      };
+      if (emergencyCoordsDisplay) emergencyCoordsDisplay.textContent = '27.3389° N, 88.6060° E';
+      if (emergencyRegionDisplay) emergencyRegionDisplay.textContent = 'North Eastern Region';
+    }
+
+    // 2. Query fine GPS coordinates if available
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = parseFloat(pos.coords.latitude.toFixed(4));
+          const lng = parseFloat(pos.coords.longitude.toFixed(4));
+          currentEmergencyCoords = {
+            lat,
+            lng,
+            state: currentEmergencyCoords?.state || 'North Eastern Region',
+            location: `GPS: ${formatCoordinates(lat, lng)}`
+          };
+          if (emergencyCoordsDisplay) emergencyCoordsDisplay.textContent = formatCoordinates(lat, lng);
+          if (emergencyLocStatus) {
+            emergencyLocStatus.textContent = 'GPS Live';
+            emergencyLocStatus.style.background = 'rgba(34, 197, 94, 0.2)';
+            emergencyLocStatus.style.color = '#22c55e';
+          }
+        },
+        (err) => {
+          console.warn('[Emergency] Geolocation check skipped/denied:', err.message);
+        },
+        { timeout: 3000, maximumAge: 60000, enableHighAccuracy: true }
+      );
+    }
+
+    emergencyModal.classList.add('active');
+    emergencyModal.setAttribute('aria-hidden', 'false');
+  }
+
+  if (btnEmergency) {
+    btnEmergency.addEventListener('click', (e) => {
+      e.preventDefault();
+      openEmergencyModal();
+    });
+  }
+
+  if (btnCloseEmergency) {
+    btnCloseEmergency.onclick = closeEmergencyModal;
+  }
+  if (btnCancelEmergency) {
+    btnCancelEmergency.onclick = closeEmergencyModal;
+  }
+  if (emergencyModal) {
+    emergencyModal.onclick = (e) => {
+      if (e.target === emergencyModal) closeEmergencyModal();
+    };
+  }
+
+  if (btnConfirmEmergency) {
+    btnConfirmEmergency.onclick = async () => {
+      try {
+        btnConfirmEmergency.disabled = true;
+        if (emergencySpinner) emergencySpinner.style.display = 'inline-block';
+        if (emergencyConfirmText) emergencyConfirmText.textContent = 'Sending Alert...';
+        if (emergencyStatusMsg) emergencyStatusMsg.style.display = 'none';
+
+        const payload = {
+          lat: currentEmergencyCoords?.lat ?? null,
+          lng: currentEmergencyCoords?.lng ?? null,
+          location: currentEmergencyCoords?.location || 'North Eastern Region',
+          state: currentEmergencyCoords?.state || 'North Eastern Region',
+          notes: 'Citizen triggered immediate Emergency SOS alert.'
+        };
+
+        const res = await services.triggerEmergencyAlert(payload);
+
+        if (emergencyStatusMsg) {
+          emergencyStatusMsg.style.display = 'block';
+          emergencyStatusMsg.style.background = 'rgba(34, 197, 94, 0.15)';
+          emergencyStatusMsg.style.border = '1px solid #22c55e';
+          emergencyStatusMsg.style.color = '#4ade80';
+          emergencyStatusMsg.innerHTML = `✓ Emergency alert sent successfully. (Advisory: ${res.alert_id || 'SOS-ACTIVE'})`;
+        }
+
+        if (typeof loadAlerts === 'function') {
+          loadAlerts();
+        }
+
+        setTimeout(() => {
+          closeEmergencyModal();
+        }, 2200);
+
+      } catch (err) {
+        console.error('[Emergency] Failed to send alert:', err);
+        btnConfirmEmergency.disabled = false;
+        if (emergencySpinner) emergencySpinner.style.display = 'none';
+        if (emergencyConfirmText) emergencyConfirmText.textContent = i18n.t('btn_confirm_emergency') || 'Confirm Emergency';
+
+        if (emergencyStatusMsg) {
+          emergencyStatusMsg.style.display = 'block';
+          emergencyStatusMsg.style.background = 'rgba(239, 68, 68, 0.15)';
+          emergencyStatusMsg.style.border = '1px solid #ef4444';
+          emergencyStatusMsg.style.color = '#f87171';
+          emergencyStatusMsg.innerHTML = `⚠️ ${err.message || 'Unable to dispatch emergency alert. Please call 112 directly.'}`;
+        }
+      }
+    };
+  }
+
+  const langSelect = $('#langSelector');
+  if (langSelect) {
+    langSelect.value = i18n.getLanguage();
+    langSelect.onchange = (e) => i18n.setLanguage(e.target.value);
+  }
 
   // Auto GPS
   $('#btnAutoGps').onclick = () => {
@@ -941,7 +1597,9 @@ function initEventHandlers() {
         authPrompt.style.display = 'block';
         authPrompt.scrollIntoView({ behavior: 'smooth' });
       }
-      alert('Please sign in with Google to submit an incident report.');
+      authModal.classList.add('active');
+      authModal.setAttribute('aria-hidden', 'false');
+      alert('Please sign in to submit an incident report.');
       return;
     }
 
@@ -963,9 +1621,10 @@ function initEventHandlers() {
     btnSubmit.disabled = true;
     btnSubmit.textContent = 'Submitting...';
 
+    const isAnon = $('#repAnonymous') && $('#repAnonymous').checked;
     const payload = {
-      citizen_name: $('#repName').value.trim(),
-      contact: $('#repPhone').value.trim() || null,
+      citizen_name: isAnon ? 'Anonymous Citizen Observer' : $('#repName').value.trim(),
+      contact: isAnon ? null : ($('#repPhone').value.trim() || null),
       incident_type: $('#repType').value,
       description: $('#repDesc').value.trim(),
       lat: lat,
@@ -1142,23 +1801,6 @@ function initEventHandlers() {
     }
   };
 
-  // Pre-fill test buttons (if present in DOM)
-  const btnFillOfficer = $('#btnFillOfficer');
-  if (btnFillOfficer) {
-    btnFillOfficer.onclick = () => {
-      $('#authEmail').value = 'officer@nera.gov.in';
-      $('#authPassword').value = 'Officer@NERA2026';
-    };
-  }
-
-  const btnFillAdmin = $('#btnFillAdmin');
-  if (btnFillAdmin) {
-    btnFillAdmin.onclick = () => {
-      $('#authEmail').value = 'admin@nera.gov.in';
-      $('#authPassword').value = 'Admin@NERA2026';
-    };
-  }
-
   // Refresh reports & history
   $('#btnRefreshReports').onclick = () => loadCommunityReports();
   const btnHistory = $('#btnRefreshHistory');
@@ -1197,6 +1839,10 @@ function initEventHandlers() {
       if (authModal?.classList.contains('active')) {
         authModal.classList.remove('active');
         authModal.setAttribute('aria-hidden', 'true');
+      }
+      if (emergencyModal?.classList.contains('active')) closeEmergencyModal();
+      if (document.getElementById('mapLayoutContainer')?.classList.contains('map-fullscreen-active')) {
+        toggleNeraFullscreenMap(false);
       }
     }
   });
@@ -1481,6 +2127,22 @@ function initEventHandlers() {
     $('#offlineNotice').classList.add('active');
   });
 
+  // Emergency Vehicle Tracker Demo Toggle
+  const btnVehicle = $('#btnToggleVehicleDemo');
+  if (btnVehicle) {
+    btnVehicle.onclick = () => {
+      const active = vehicleTracker.toggle();
+      btnVehicle.classList.toggle('active', active);
+      const span = btnVehicle.querySelector('span');
+      if (span) {
+        span.textContent = active ? '🚑 Vehicle Tracker (Active)' : '🚑 Vehicle Tracker (Demo)';
+      }
+      if (active && activeLocation) {
+        vehicleTracker.setTarget(activeLocation.lat, activeLocation.lng, activeLocation.name);
+      }
+    };
+  }
+
   // Theme Toggle (Dark / Light)
   const themeToggle = $('#themeToggle');
   const themeIcon = $('#themeIcon');
@@ -1517,17 +2179,45 @@ function initEventHandlers() {
 }
 
 async function init() {
-  [stateData] = await Promise.all([monitoringService.getStates(), monitoringService.getRegionalStatus()]);
+  initEventHandlers();
+  updateAuthUI();
+  i18n.translateDOM();
+
+  const [states, regional] = await Promise.all([monitoringService.getStates(), monitoringService.getRegionalStatus()]);
+  stateData = states;
+  if (regional) renderRegionalStatus(regional);
   const alerts = await monitoringService.getAlerts();
   $('#updateTime').textContent = new Intl.DateTimeFormat('en-IN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' }).format(new Date());
   setupMap(stateData);
+  vehicleTracker.init(map);
   showLocation(stateData[0]);
   renderTable(stateData);
   renderBars(stateData);
   renderAlerts(alerts);
-  initEventHandlers();
-  updateAuthUI();
-  await Promise.all([loadCommunityReports(), loadDataSources(), loadHistorical(), loadRoads()]);
+
+  window.addEventListener('nera:language-changed', () => {
+    i18n.translateDOM();
+    if (stateData && stateData.length) {
+      renderTable(stateData);
+      if (activeLocation) showLocation(activeLocation);
+      renderBars(stateData);
+    }
+    if (alertsData && alertsData.length) {
+      renderAlerts(alertsData);
+    }
+    if (lastRegionalStatus) {
+      renderRegionalStatus(lastRegionalStatus);
+    }
+  });
+
+  await Promise.all([
+    loadCommunityReports(),
+    loadDataSources(),
+    loadHistorical(),
+    loadRoads(),
+    updateAnalyticsSummary(),
+    updatePredictionDisplay(stateData[0]?.short || 'ML')
+  ]);
 }
 
 init().catch((error) => {

@@ -5,7 +5,13 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from backend.auth.dependencies import require_admin, require_officer_or_admin
 from backend.database.db import get_db
-from backend.models.schemas import AlertCreate, AlertOut, AlertUpdate
+from backend.models.schemas import (
+    AlertCreate,
+    AlertOut,
+    AlertUpdate,
+    EmergencyTriggerRequest,
+    EmergencyTriggerResponse,
+)
 from backend.services.providers import ProviderService
 
 router = APIRouter(prefix="/api/alerts", tags=["Alerts & Early Warning"])
@@ -148,3 +154,61 @@ def delete_alert(
     with get_db() as conn:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM alerts WHERE id = ?", (alert_id,))
+
+
+@router.post("/emergency", response_model=EmergencyTriggerResponse, status_code=status.HTTP_201_CREATED)
+def trigger_emergency_alert(req: EmergencyTriggerRequest):
+    """Trigger an immediate Emergency SOS advisory (Public / Citizen access)."""
+    now_iso = datetime.now(timezone.utc).isoformat()
+    alert_id = f"alert-sos-{uuid.uuid4().hex[:8]}"
+
+    # Resolve location and state
+    state = req.state.strip() if req.state and req.state.strip() else "North Eastern Region"
+    if req.location and req.location.strip():
+        location = req.location.strip()
+    elif req.lat is not None and req.lng is not None:
+        location = f"GPS: {req.lat:.4f}° N, {req.lng:.4f}° E"
+    else:
+        location = "North Eastern Region (GPS Unavailable)"
+
+    reason = f"EMERGENCY SOS: Citizen triggered emergency alert. {req.notes or ''}".strip()
+    action = "Immediate SDRF/NDRF search and rescue dispatch and field verification required."
+
+    # Dispatch notifications safely (simulated or live)
+    dispatch = ProviderService.dispatch_alert_notifications(
+        alert_id=alert_id,
+        state=state,
+        location=location,
+        level="Critical",
+        reason=reason
+    )
+    delivery_status = "DISPATCHED_LIVE" if (dispatch["fcm_delivered"] or dispatch["sms_delivered"]) else "SIMULATED_DEMO"
+
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO alerts (id, state, location, level, reason, action, time, status, delivery_status, created_at)
+            VALUES (?, ?, ?, 'Critical', ?, ?, 'Just now', 'ACTIVE', ?, ?)
+            """,
+            (
+                alert_id,
+                state,
+                location,
+                reason,
+                action,
+                delivery_status,
+                now_iso,
+            ),
+        )
+        return {
+            "success": True,
+            "alert_id": alert_id,
+            "message": "Emergency alert sent successfully.",
+            "location": location,
+            "state": state,
+            "level": "Critical",
+            "delivery_status": delivery_status,
+            "created_at": now_iso
+        }
+

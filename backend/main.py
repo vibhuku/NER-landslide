@@ -12,10 +12,12 @@ from fastapi.staticfiles import StaticFiles
 from backend.config import settings
 from backend.database.init_db import init_database
 from backend.routers import (
+    advanced,
     alerts,
     analytics,
     auth,
     data_sources,
+    geo,
     infrastructure,
     predictions,
     reports,
@@ -59,6 +61,8 @@ app.include_router(alerts.router)
 app.include_router(predictions.router)
 app.include_router(analytics.router)
 app.include_router(data_sources.router)
+app.include_router(advanced.router)
+app.include_router(geo.router)
 
 
 @app.get("/api/health", tags=["Health"])

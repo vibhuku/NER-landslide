@@ -44,6 +44,29 @@ from backend.routers.reports import (
     upload_media,
     verify_report,
 )
+from backend.routers.advanced import (
+    compute_safest_evacuation_route,
+    dispatch_multi_channel_notification,
+    generate_situation_report,
+    get_critical_infrastructure,
+    get_officer_actions,
+    get_rainfall_observations,
+    get_sensor_telemetry,
+    get_state_forecast,
+    get_top_risk_villages,
+    get_volunteers,
+    record_officer_action,
+    record_rainfall_observation,
+    simulate_what_if_risk,
+)
+from backend.models.schemas import (
+    LatLng,
+    NotificationDispatchCreate,
+    OfficerActionCreate,
+    RainfallObservationCreate,
+    SafestRouteRequest,
+    WhatIfSimInput,
+)
 from backend.routers.risk_data import get_all_states, get_regional_status, get_state
 from backend.services.prediction_engine import LandslidePredictionEngine
 from fastapi import HTTPException
@@ -397,7 +420,160 @@ class TestNeraBackend(unittest.TestCase):
         self.assertEqual(auth_res2["user"]["role"], "citizen")
         self.assertEqual(auth_res2["user"]["photo_url"], "https://example.com/updated_photo.jpg")
 
+    def test_18_advanced_features_suite(self):
+        """Verify SIH26001 advanced features endpoints and models."""
+        # 1. Critical Infrastructure
+        infra = get_critical_infrastructure()
+        self.assertGreaterEqual(len(infra), 5)
+        self.assertTrue(any(i["category"].lower() == "hospital" for i in infra))
+
+        # 2. Top Risk Villages
+        villages_resp = get_top_risk_villages(limit=10)
+        self.assertLessEqual(len(villages_resp["villages"]), 10)
+        self.assertIn("total_population_at_risk", villages_resp)
+
+        # 3. Sensor Telemetry
+        sensors_resp = get_sensor_telemetry()
+        self.assertEqual(sensors_resp["data_status"], "DEMO / SIMULATED")
+        self.assertGreaterEqual(sensors_resp["active_stations"], 4)
+
+        # 4. Multi-Horizon Forecast
+        fc = get_state_forecast("ML")
+        self.assertEqual(fc["state_code"], "ML")
+        self.assertIn("forecast_24h", fc)
+        self.assertIn("forecast_48h", fc)
+        self.assertIn("forecast_7d", fc)
+        self.assertEqual(len(fc["daily_trend"]), 7)
+
+        # 5. What-If Risk Simulator & XAI breakdown
+        sim_input = WhatIfSimInput(
+            rainfall_24h_mm=140.0,
+            soil_moisture_pct=85.0,
+            slope_deg=40.0,
+            monsoon_mode="monsoon",
+            state_code="ML"
+        )
+        sim_out = simulate_what_if_risk(sim_input)
+        self.assertGreater(sim_out.risk_score, 70)
+        self.assertIn(sim_out.risk_level, ["High", "Critical"])
+        self.assertEqual(len(sim_out.factors), 3)
+        self.assertEqual(sim_out.data_status, "DEMO / SIMULATED")
+
+        # 6. Safest Evacuation Route
+        route_req = SafestRouteRequest(
+            origin=LatLng(lat=25.5788, lng=91.8933),
+            destination=LatLng(lat=26.1445, lng=91.7362),
+            avoid_blocked_roads=True
+        )
+        route_res = compute_safest_evacuation_route(route_req)
+        self.assertGreater(len(route_res.safe_path), 3)
+        self.assertGreater(route_res.safety_score, 70)
+        self.assertEqual(route_res.data_status, "DEMO / SIMULATED")
+
+        # 7. Multi-Channel Notification Dispatch
+        notif_req = NotificationDispatchCreate(
+            channels=["sms", "whatsapp", "voice_ivr"],
+            recipients=["+919876543210"],
+            message="Alert: Heavy landslide warning in East Khasi Hills.",
+            priority="critical",
+            language="en"
+        )
+        disp_res = dispatch_multi_channel_notification(notif_req)
+        self.assertEqual(len(disp_res["channels_dispatched"]), 3)
+        self.assertEqual(disp_res["data_status"], "DEMO / SIMULATED")
+
+        # 8. Volunteer Network Directory
+        vols = get_volunteers()
+        self.assertGreaterEqual(len(vols), 4)
+
+        # 9. Rainfall Observations (Crowd-sourced)
+        rain_obs = record_rainfall_observation(
+            RainfallObservationCreate(
+                reporter_name="Community Observer Shillong",
+                state_code="ML",
+                district="East Khasi Hills",
+                measured_mm=64.5,
+                observed_intensity="HEAVY"
+            )
+        )
+        self.assertIn("RAIN-", rain_obs["id"])
+        all_obs = get_rainfall_observations()
+        self.assertTrue(any(o["id"] == rain_obs["id"] for o in all_obs))
+
+        # 10. Officer Actions & Situation Report
+        officer_user = {"id": "usr-officer-01", "role": "officer", "full_name": "Test Officer"}
+        act = record_officer_action(
+            OfficerActionCreate(
+                officer_name="Officer Lyngdoh",
+                action_type="ROAD_DIVERSION",
+                notes="Traffic diverted to old bypass due to slope creeping.",
+                response_time_minutes=14
+            ),
+            user=officer_user
+        )
+        self.assertIn("ACT-", act["id"])
+        actions_list = get_officer_actions()
+        self.assertGreater(actions_list["total_actions"], 0)
+
+        # SitRep
+        sitrep = generate_situation_report(user=officer_user)
+        self.assertTrue(sitrep["is_privileged_view"])
+        self.assertIn("summary", sitrep)
+
+    def test_19_precision_gis_and_reverse_geocoding(self):
+        """Verify precision reverse geocoding and road segments geometry."""
+        from backend.routers.geo import reverse_geocode, get_road_segments
+
+        # 1. Coordinate near Chungthang, Sikkim (lat 27.50, lng 88.52)
+        res = reverse_geocode(lat=27.50, lng=88.52)
+        self.assertEqual(res["status"], "AVAILABLE")
+        self.assertEqual(res["village"], "Chungthang")
+        self.assertEqual(res["state"], "SK")
+        self.assertIn("Chungthang", res["formatted_address"])
+        self.assertIsNotNone(res["distance_km"])
+
+        # 2. Out-of-bounds coordinate (e.g. Indian Ocean, lat 0.0, lng 80.0)
+        res_oob = reverse_geocode(lat=0.0, lng=80.0)
+        self.assertEqual(res_oob["status"], "UNAVAILABLE")
+        self.assertEqual(res_oob["message"], "Address unavailable — coordinates available")
+
+        # 3. Road segments
+        segments = get_road_segments()
+        self.assertGreater(len(segments), 0)
+        # Check NH-10 has segment bounds
+        nh10 = next((r for r in segments if r["highway_code"] == "NH-10"), None)
+        self.assertIsNotNone(nh10)
+        self.assertEqual(nh10["segment_km_start"], 42.3)
+        self.assertEqual(nh10["segment_km_end"], 45.1)
+        self.assertIsNotNone(nh10["start_lat"])
+        self.assertIsNotNone(nh10["end_lat"])
+
+    def test_20_emergency_alert_trigger(self):
+        """Verify public Emergency SOS alert trigger creates active critical alert."""
+        from backend.routers.alerts import trigger_emergency_alert, list_alerts
+        from backend.models.schemas import EmergencyTriggerRequest
+
+        req = EmergencyTriggerRequest(
+            lat=27.3389,
+            lng=88.6060,
+            location="Gangtok Sector A",
+            state="Sikkim",
+            notes="Citizen triggered SOS from topbar button"
+        )
+        res = trigger_emergency_alert(req)
+        self.assertTrue(res["success"])
+        self.assertEqual(res["level"], "Critical")
+        self.assertEqual(res["state"], "Sikkim")
+        self.assertIn("Gangtok", res["location"])
+        self.assertIn("alert-sos-", res["alert_id"])
+
+        # Verify the alert is now in active alerts
+        active_alerts = list_alerts(status="ACTIVE")
+        self.assertTrue(any(a["id"] == res["alert_id"] for a in active_alerts))
+
 
 if __name__ == "__main__":
     unittest.main()
+
+
 

@@ -19,6 +19,9 @@ const REQUIRED_FILES = [
   'ner-boundaries.geojson',
   'services.js',
   'offline-store.js',
+  'i18n.js',
+  'advanced-features.js',
+  'precision-gis.js',
   'styles.css',
   'map-fixes.css'
 ];

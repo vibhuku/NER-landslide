@@ -26,14 +26,24 @@
         <span><strong>NER-Landslide</strong><small>AI-Based Early Warning &amp; Risk Monitoring</small></span>
       </a>
       <nav aria-label="Main navigation">
-        <a class="active" href="#dashboard">Dashboard</a><a href="#map-region">Risk Map</a><a href="#alerts">Alerts</a><a href="#analytics">Analytics</a><a href="#reports">Reports</a><a href="#methodology">About</a>
+        <a class="active" href="#dashboard" data-i18n="nav_dashboard">Dashboard</a><a href="#map-region" data-i18n="nav_map">Risk Map</a><a href="#alerts" data-i18n="nav_alerts">Alerts</a><a href="#analytics" data-i18n="nav_analytics">Analytics</a><a href="#reports" data-i18n="nav_reports">Reports</a><a href="#methodology" data-i18n="nav_about">About</a>
       </nav>
-      <div class="system-meta"><span class="live"><b></b> System operational</span><span>Updated <time id="updateTime"></time></span></div>
+      <div class="system-meta"><span class="live"><b aria-hidden="true"></b> <span data-i18n="topbar_system_operational">System operational</span></span><span><span data-i18n="topbar_updated">Updated</span> <time id="updateTime"></time></span></div>
       <div class="topbar-actions">
+        <button type="button" class="topbar-emergency-btn" id="btnEmergencyCall" aria-label="Trigger Emergency Alert" title="Trigger Emergency Alert">
+          <span class="emergency-icon" aria-hidden="true">🚨</span>
+          <span class="emergency-label" data-i18n="topbar_emergency">EMERGENCY</span>
+        </button>
+        <select id="langSelector" class="lang-selector" aria-label="Select language" title="Change Language">
+          <option value="en">English</option>
+          <option value="hi">हिंदी (Hindi)</option>
+          <option value="as">অসমীয়া (Assamese)</option>
+          <option value="bn">বাংলা (Bengali)</option>
+        </select>
         <button id="themeToggle" class="theme-toggle-btn" aria-label="Toggle dark and light theme" title="Toggle theme (Dark / Light)">
           <span id="themeIcon">🌙</span>
         </button>
-        <button id="btnOpenAuth" class="topbar-auth-btn"><span id="authStatusText">Login</span></button>
+        <button id="btnOpenAuth" class="topbar-auth-btn"><span id="authStatusText" data-i18n="nav_login">Login</span></button>
         <div class="user-profile-menu-wrap" id="userProfileMenuWrap" style="display:none;">
           <button type="button" class="topbar-user-btn" id="btnUserMenu" aria-expanded="false" title="Account Menu">
             <img id="userAvatarImg" class="user-avatar-img" src="" alt="Avatar" style="display:none;" />
@@ -49,14 +59,14 @@
             </div>
             <div class="user-dropdown-divider"></div>
             <button type="button" class="user-dropdown-item" id="menuItemProfile">
-              <span>👤 Profile</span>
+              <span data-i18n="nav_profile">👤 Profile</span>
             </button>
             <button type="button" class="user-dropdown-item" id="menuItemMyReports">
-              <span>📋 My Reports</span>
+              <span data-i18n="nav_my_reports">📋 My Reports</span>
             </button>
             <div class="user-dropdown-divider"></div>
             <button type="button" class="user-dropdown-item logout" id="menuItemLogout">
-              <span>🚪 Logout</span>
+              <span data-i18n="nav_logout">🚪 Logout</span>
             </button>
           </div>
         </div>
@@ -69,28 +79,29 @@
         <div class="hero-content">
           <div class="hero-pill">
             <span class="hero-pulse"></span>
-            <span>NERA 2.0 Operational Monitoring · 8 NER States</span>
+            <span data-i18n="hero_pill">NERA 2.0 Operational Monitoring · 8 NER States</span>
           </div>
-          <h1 class="hero-heading">AI-Powered Landslide Early Warning for North East India</h1>
-          <p class="hero-lead">
+          <h1 class="hero-heading" data-i18n="hero_title">AI-Powered Landslide Early Warning for North East India</h1>
+          <p class="hero-lead" data-i18n="hero_desc">
             Continuous geotechnical intelligence, satellite radar deformation monitoring, and real-time citizen reporting for disaster risk reduction across Arunachal Pradesh, Assam, Manipur, Meghalaya, Mizoram, Nagaland, Sikkim, and Tripura.
           </p>
           <div class="hero-actions">
-            <a href="#map-region" class="btn-hero-primary">View Live Risk Map</a>
-            <button id="heroBtnReport" class="btn-hero-secondary">Report Incident</button>
+            <button type="button" id="btnHeroViewMap" class="btn-hero-primary" data-i18n="hero_btn_view_map">🗺️ View Map</button>
+            <a href="#map-region" class="btn-hero-secondary" data-i18n="hero_btn_map">Operational GIS</a>
+            <button id="heroBtnReport" class="btn-hero-secondary" data-i18n="hero_btn_report">Report Incident</button>
           </div>
           <div class="hero-badges-row">
             <div class="hero-stat-badge">
               <span class="stat-digit">8</span>
-              <span class="stat-text">NER States Monitored</span>
+              <span class="stat-text" data-i18n="hero_stat_states">NER States Monitored</span>
             </div>
             <div class="hero-stat-badge">
               <span class="stat-digit">6-Factor</span>
-              <span class="stat-text">AI Geotechnical Model</span>
+              <span class="stat-text" data-i18n="hero_stat_factors">AI Geotechnical Model</span>
             </div>
             <div class="hero-stat-badge">
               <span class="stat-digit">Dual Spatial</span>
-              <span class="stat-text">PostGIS + SQLite Engine</span>
+              <span class="stat-text" data-i18n="hero_stat_engine">PostGIS + SQLite Engine</span>
             </div>
           </div>
         </div>
@@ -118,33 +129,123 @@
       </section>
 
       <section class="status-strip" aria-label="Regional overview">
-        <div><span>Regional assessment</span><strong><em class="dot high"></em>Elevated risk</strong><small>2 districts require attention</small></div>
-        <div><span>Active alerts</span><strong id="alertCount">04</strong><small>1 warning · 3 watches</small></div>
-        <div><span>High-risk locations</span><strong>03</strong><small>Across Arunachal &amp; Sikkim</small></div>
-        <div><span>Rainfall status</span><strong>Above normal</strong><small>+18% 24h regional anomaly</small></div>
-        <div><span>Data freshness</span><strong>12 min</strong><small id="dataFreshnessMode">Demo / simulated data</small></div>
+        <div><span data-i18n="strip_regional_assessment">Regional assessment</span><strong id="regAssessment"><em class="dot high"></em>Elevated risk</strong><small id="regDistricts">2 districts require attention</small></div>
+        <div><span data-i18n="strip_active_alerts">Active alerts</span><strong id="alertCount">04</strong><small>1 warning · 3 watches</small></div>
+        <div><span data-i18n="strip_high_risk">High-risk locations</span><strong id="regHighRisk">03</strong><small>Across Arunachal &amp; Sikkim</small></div>
+        <div><span data-i18n="strip_rainfall_status">Rainfall status</span><strong id="regRainStatus">Above normal</strong><small id="regRainAnomaly">+18% 24h regional anomaly</small></div>
+        <div><span data-i18n="strip_data_freshness">Data freshness</span><strong id="regFreshness">12 min</strong><small id="dataFreshnessMode">Demo / simulated data</small></div>
       </section>
 
       <section class="workspace" id="map-region">
-        <div class="section-heading"><div><p class="eyebrow">Operational GIS view</p><h1>North Eastern Region risk map</h1></div><span class="data-badge" id="dataModeBadge">DEMO / SIMULATED DATA</span></div>
-        <div class="map-layout">
+        <div class="section-heading"><div><p class="eyebrow" data-i18n="map_eyebrow">Operational GIS view</p><h1 data-i18n="map_title">North Eastern Region risk map</h1></div><span class="data-badge" id="dataModeBadge">DEMO / SIMULATED DATA</span></div>
+        <div class="advanced-tools-bar">
+          <button type="button" class="tool-btn btn-toolbar-view-map" id="btnToolbarViewMap" title="Expand Full-Screen Risk Map">
+            <span data-i18n="btn_view_map">🗺️ View Map</span>
+          </button>
+          <div class="tools-dropdown-wrap">
+            <button type="button" class="tool-btn tools-dropdown-btn" id="btnToolsDropdown" aria-expanded="false" title="Decision Support Tools">
+              <span data-i18n="btn_tools">🛠️ Tools ▾</span>
+            </button>
+            <div class="tools-dropdown-menu" id="toolsDropdownMenu" style="display:none;">
+              <button type="button" class="dropdown-tool-item" id="btnOpenWhatIf" title="What-If Risk Simulation">
+                <span data-i18n="tool_whatif">⚡ What-If Simulator</span>
+              </button>
+              <button type="button" class="dropdown-tool-item" id="btnOpenSafestRoute" title="Find Evacuation Corridor">
+                <span data-i18n="tool_route">🛣️ Safest Route</span>
+              </button>
+              <button type="button" class="dropdown-tool-item" id="btnOpenTopVillages" title="Top 10 High-Risk Villages">
+                <span data-i18n="tool_villages">🏘️ Top Villages</span>
+              </button>
+              <button type="button" class="dropdown-tool-item" id="btnOpenSensors" title="Ground Sensor Telemetry">
+                <span data-i18n="tool_sensors">📡 IoT Sensors</span>
+              </button>
+              <button type="button" class="dropdown-tool-item" id="btnOpenVolunteers" title="Community Volunteers">
+                <span data-i18n="tool_volunteers">🤝 Volunteers</span>
+              </button>
+              <button type="button" class="dropdown-tool-item" id="btnOpenDispatchDemo" title="Multi-Channel Alert Broadcast">
+                <span data-i18n="tool_broadcast">🚨 Broadcast Demo</span>
+              </button>
+              <button type="button" class="dropdown-tool-item" id="btnToggleVehicleDemo" title="Emergency Response Vehicle Live Location (Demo)">
+                <span data-i18n="tool_vehicle">🚑 Vehicle Tracker (Demo)</span>
+              </button>
+              <button type="button" class="dropdown-tool-item officer-portal-item" id="btnOpenOfficerPortal" title="Officer Incident Command Portal">
+                <span data-i18n="tool_officer">🛡️ Officer Portal</span>
+              </button>
+            </div>
+          </div>
+          <div class="monsoon-mode-wrap">
+            <label for="monsoonModeSelector" class="monsoon-label" data-i18n="monsoon_label">🌧️ Mode:</label>
+            <select id="monsoonModeSelector" class="monsoon-select" title="Monsoon Mode Switcher">
+              <option value="monsoon" data-i18n="lbl_peak_monsoon">Peak Monsoon</option>
+              <option value="pre_monsoon" data-i18n="lbl_pre_monsoon">Pre-Monsoon</option>
+              <option value="post_monsoon" data-i18n="lbl_post_monsoon">Post-Monsoon</option>
+            </select>
+          </div>
+        </div>
+        <div id="monsoonNoticeBanner" class="monsoon-notice-banner"></div>
+        <div id="gisProximityBanner" class="monsoon-notice-banner gis-proximity-banner" style="display:none;"></div>
+        <div class="map-layout" id="mapLayoutContainer">
+          <div class="map-fullscreen-topbar" id="mapFullscreenTopBar" style="display:none;">
+            <div class="map-fullscreen-title">
+              <span class="map-fullscreen-badge">NERA 2.0 GIS</span>
+              <strong data-i18n="map_fullscreen_heading">North Eastern Region · Landslide Operational Map</strong>
+            </div>
+            <div class="map-fullscreen-actions">
+              <button type="button" class="btn-fullscreen-back" id="btnExitMapFullscreen" title="Return to Dashboard">
+                <span aria-hidden="true">←</span> <span data-i18n="btn_back_to_dashboard">Back to Dashboard</span>
+              </button>
+              <button type="button" class="btn-fullscreen-close" id="btnCloseMapFullscreen" aria-label="Close full-screen map" title="Close (Esc)">✕</button>
+            </div>
+          </div>
           <div class="map-shell">
             <div id="map" aria-label="Interactive map of North East India showing landslide risk markers"></div>
-            <div class="map-caption"><span>Regional operational overview · 8 NER states (Survey of India / DataMeet boundary overlay)</span><div class="legend"><b class="low"></b> Low <b class="moderate"></b> Moderate <b class="high"></b> High <b class="critical"></b> Critical</div></div>
+            <div class="map-caption">
+              <div class="map-caption-meta">
+                <span data-i18n="map_caption">Regional operational overview · 8 NER states (Survey of India / DataMeet boundary overlay)</span>
+                <span class="basemap-indicator" title="Geographic base map">Base: Google Maps</span>
+              </div>
+              <div class="legend-container">
+                <div class="legend-group">
+                  <span class="legend-group-title">Landslide Risk:</span>
+                  <span class="legend-item"><b class="swatch low"></b> <span data-i18n="legend_low">Low</span></span>
+                  <span class="legend-item"><b class="swatch moderate"></b> <span data-i18n="legend_moderate">Medium</span></span>
+                  <span class="legend-item"><b class="swatch high"></b> <span data-i18n="legend_high">High</span></span>
+                  <span class="legend-item"><b class="swatch critical"></b> <span data-i18n="legend_critical">Critical</span></span>
+                </div>
+                <div class="legend-group">
+                  <span class="legend-group-title">Road Risk:</span>
+                  <span class="legend-item"><b class="swatch-road low"></b> <span>Low</span></span>
+                  <span class="legend-item"><b class="swatch-road moderate"></b> <span>Medium</span></span>
+                  <span class="legend-item"><b class="swatch-road high"></b> <span>High</span></span>
+                  <span class="legend-item"><b class="swatch-road critical"></b> <span>Critical</span></span>
+                </div>
+                <div class="legend-group">
+                  <span class="legend-item"><b class="swatch-blocked-road"></b> <span>Blocked Road</span></span>
+                  <span class="legend-item"><span class="legend-icon verified">⛰️✓</span> <span>Verified Landslide</span></span>
+                  <span class="legend-item"><span class="legend-icon unverified">⚠️?</span> <span>Unverified Report</span></span>
+                </div>
+              </div>
+            </div>
           </div>
-          <aside class="location-panel" aria-live="polite"><div class="panel-title"><span>Location assessment</span><button id="resetMap" title="Reset map view">Reset</button></div><div id="locationDetail"></div></aside>
+          <aside class="location-panel" aria-live="polite">
+            <div class="panel-title">
+              <span data-i18n="panel_location_assessment">Location assessment</span>
+              <button id="resetMap" class="btn-reset-map" title="Reset map view" data-i18n="btn_reset">Reset</button>
+            </div>
+            <div id="locationDetail"></div>
+          </aside>
         </div>
       </section>
 
       <section class="grid two-col">
-        <article class="panel" id="alerts"><div class="panel-title"><div><p class="eyebrow">Early warning</p><h2>Active advisories</h2></div><button class="text-button">View all alerts</button></div><div id="alertList" class="alert-list"></div></article>
-        <article class="panel environment"><div class="panel-title"><div><p class="eyebrow">Weather &amp; environment</p><h2>Regional conditions</h2></div><span class="muted">Last 24 hours</span></div><div class="metrics"><div><span>Rainfall</span><strong>86 <small>mm</small></strong><b>+18% anomaly</b></div><div><span>Soil moisture</span><strong>72<small>%</small></strong><b>Elevated</b></div><div><span>Temperature</span><strong>23<small>°C</small></strong><b>−2°C normal</b></div><div><span>Humidity</span><strong>89<small>%</small></strong><b>High</b></div></div><div class="chart-head"><span>Rainfall accumulation</span><span>24h / 7-day</span></div><div class="bar-chart" aria-label="Seven day rainfall bar chart"><i style="height:31%"></i><i style="height:43%"></i><i style="height:26%"></i><i style="height:55%"></i><i style="height:39%"></i><i style="height:68%"></i><i class="current" style="height:91%"></i></div><div class="chart-days"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Today</span></div></article>
+        <article class="panel" id="alerts"><div class="panel-title"><div><p class="eyebrow" data-i18n="alerts_eyebrow">Early warning</p><h2 data-i18n="alerts_title">Active advisories</h2></div><button class="text-button" id="btnViewAllAlerts" data-i18n="btn_view_all_alerts">View all alerts</button></div><div id="alertList" class="alert-list"></div></article>
+        <article class="panel environment"><div class="panel-title"><div><p class="eyebrow" data-i18n="weather_eyebrow">Weather &amp; environment</p><h2 data-i18n="weather_title">Regional conditions</h2></div><span class="muted" data-i18n="weather_last24">Last 24 hours</span></div><div class="metrics"><div><span data-i18n="metrics_rainfall">Rainfall</span><strong>86 <small>mm</small></strong><b>+18% anomaly</b></div><div><span data-i18n="metrics_soil">Soil moisture</span><strong>72<small>%</small></strong><b>Elevated</b></div><div><span data-i18n="metrics_temp">Temperature</span><strong>23<small>°C</small></strong><b>−2°C normal</b></div><div><span data-i18n="metrics_humidity">Humidity</span><strong>89<small>%</small></strong><b>High</b></div></div><div class="chart-head"><span data-i18n="chart_accumulation">Rainfall accumulation</span><span data-i18n="chart_days">24h / 7-day</span></div><div class="bar-chart" aria-label="Seven day rainfall bar chart"><i style="height:31%"></i><i style="height:43%"></i><i style="height:26%"></i><i style="height:55%"></i><i style="height:39%"></i><i style="height:68%"></i><i class="current" style="height:91%"></i></div><div class="chart-days"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Today</span></div></article>
       </section>
 
       <section class="grid three-col" id="analytics">
         <article class="panel prediction">
-          <p class="eyebrow">AI/ML Risk Prediction</p>
-          <h2>Regional Landslide Risk Index</h2>
+          <p class="eyebrow" data-i18n="prediction_eyebrow">AI/ML Risk Prediction</p>
+          <h2 data-i18n="prediction_title">Regional Landslide Risk Index</h2>
           <div class="circular-gauge-wrap">
             <svg class="circular-gauge" viewBox="0 0 120 120">
               <circle class="gauge-bg" cx="60" cy="60" r="48"></circle>
@@ -157,28 +258,28 @@
             </div>
           </div>
           <div class="risk-scale"><i></i><i></i><i></i><i></i><b style="left:68%" id="predictionScalePin"></b></div>
-          <p class="muted">6-factor geotechnical inputs: 24h rainfall, soil moisture, slope gradient, digital elevation, historical inventory, and InSAR deformation.</p>
-          <small class="disclaimer">Illustrative calibrated model output — not a certified live warning.</small>
+          <p class="muted" data-i18n="prediction_muted">6-factor geotechnical inputs: 24h rainfall, soil moisture, slope gradient, digital elevation, historical inventory, and InSAR deformation.</p>
+          <small class="disclaimer" data-i18n="prediction_disclaimer">Illustrative calibrated model output — not a certified live warning.</small>
         </article>
-        <article class="panel"><div class="panel-title"><div><p class="eyebrow">State-wise risk</p><h2>Current distribution</h2></div></div><div id="stateBars" class="state-bars"></div></article>
-        <article class="panel satellite"><p class="eyebrow">Earth observation</p><h2>Satellite data readiness</h2><dl id="satelliteDl"><div><dt>Primary planned source</dt><dd>NISAR L-band &amp; S-band</dd></div><div><dt>ISRO / NRSC Platform</dt><dd>Bhoonidhi Open Data Access</dd></div><div><dt>Coverage</dt><dd>North Eastern Region (8 States)</dd></div><div><dt>Processing status</dt><dd><span class="status-chip" id="satelliteStatusChip">Demo / Data source not connected</span></dd></div></dl><small id="satelliteDisclaimer" class="disclaimer">Demo / Data source not connected</small></article>
+        <article class="panel"><div class="panel-title"><div><p class="eyebrow" data-i18n="state_bars_eyebrow">State-wise risk</p><h2 data-i18n="state_bars_title">Current distribution</h2></div></div><div id="stateBars" class="state-bars"></div></article>
+        <article class="panel satellite"><p class="eyebrow" data-i18n="satellite_eyebrow">Earth observation</p><h2 data-i18n="satellite_title">Satellite data readiness</h2><dl id="satelliteDl"><div><dt>Primary planned source</dt><dd>NISAR L-band &amp; S-band</dd></div><div><dt>ISRO / NRSC Platform</dt><dd>Bhoonidhi Open Data Access</dd></div><div><dt>Coverage</dt><dd>North Eastern Region (8 States)</dd></div><div><dt>Processing status</dt><dd><span class="status-chip" id="satelliteStatusChip">Demo / Data source not connected</span></dd></div></dl><small id="satelliteDisclaimer" class="disclaimer">Demo / Data source not connected</small></article>
       </section>
 
-      <section class="panel table-panel"><div class="panel-title"><div><p class="eyebrow">State-wise monitoring</p><h2>NER situation register</h2></div><span class="muted">Select a row to locate on map</span></div><div class="table-wrap"><table><thead><tr><th>State</th><th>Risk level</th><th>Score</th><th>Rainfall</th><th>Active alerts</th><th>Last updated</th></tr></thead><tbody id="stateTable"></tbody></table></div></section>
+      <section class="panel table-panel"><div class="panel-title"><div><p class="eyebrow" data-i18n="table_eyebrow">State-wise monitoring</p><h2 data-i18n="table_title">NER situation register</h2></div><span class="muted" data-i18n="table_hint">Select a row to locate on map</span></div><div class="table-wrap"><table><thead><tr><th data-i18n="th_state">State</th><th data-i18n="th_risk">Risk level</th><th data-i18n="th_score">Score</th><th data-i18n="th_rain">Rainfall</th><th data-i18n="th_alerts">Active alerts</th><th data-i18n="th_updated">Last updated</th></tr></thead><tbody id="stateTable"></tbody></table></div></section>
 
       <section class="grid two-col lower-grid">
-        <article class="panel"><div class="panel-title"><div><p class="eyebrow">Historical landslide data</p><h2>Reference events</h2></div><button class="text-button" id="btnRefreshHistory">Data source notes</button></div><div class="table-wrap compact"><table><thead><tr><th>Location</th><th>Date</th><th>Severity</th><th>Trigger</th></tr></thead><tbody id="historicalTable"><tr><td>Upper Subansiri, AR</td><td>Jul 2024</td><td><span class="tag high-tag">High</span></td><td>Prolonged rainfall</td></tr><tr><td>East Khasi Hills, ML</td><td>Jun 2024</td><td><span class="tag moderate-tag">Moderate</span></td><td>Slope saturation</td></tr><tr><td>North Sikkim, SK</td><td>Oct 2023</td><td><span class="tag critical-tag">Critical</span></td><td>Extreme rainfall</td></tr></tbody></table></div><p class="footnote">Historical records inform model training and validation. Sources must be verified before operational use.</p></article>
+        <article class="panel"><div class="panel-title"><div><p class="eyebrow" data-i18n="history_eyebrow">Historical landslide data</p><h2 data-i18n="history_title">Reference events</h2></div><button class="text-button" id="btnRefreshHistory">Data source notes</button></div><div class="table-wrap compact"><table><thead><tr><th data-i18n="th_location">Location</th><th data-i18n="th_date">Date</th><th data-i18n="th_severity">Severity</th><th data-i18n="th_trigger">Trigger</th></tr></thead><tbody id="historicalTable"><tr><td>Upper Subansiri, AR</td><td>Jul 2024</td><td><span class="tag high-tag">High</span></td><td>Prolonged rainfall</td></tr><tr><td>East Khasi Hills, ML</td><td>Jun 2024</td><td><span class="tag moderate-tag">Moderate</span></td><td>Slope saturation</td></tr><tr><td>North Sikkim, SK</td><td>Oct 2023</td><td><span class="tag critical-tag">Critical</span></td><td>Extreme rainfall</td></tr></tbody></table></div><p class="footnote" data-i18n="history_footnote">Historical records inform model training and validation. Sources must be verified before operational use.</p></article>
         <article class="panel" id="reports">
-          <div class="panel-title"><div><p class="eyebrow">Reports &amp; Field Intelligence</p><h2>Ground Incident Reports</h2></div><button class="text-button" id="btnRefreshReports">Refresh</button></div>
+          <div class="panel-title"><div><p class="eyebrow" data-i18n="reports_eyebrow">Reports &amp; Field Intelligence</p><h2 data-i18n="reports_title">Ground Incident Reports</h2></div><button class="text-button" id="btnRefreshReports" data-i18n="btn_refresh">Refresh</button></div>
           <div id="communityReportsList" class="community-reports-list">
             <div style="padding:10px 0;color:var(--text-muted);font-size:11px;">Loading submitted incident reports...</div>
           </div>
           <div style="margin-top:16px;border-top:1px solid var(--border-subtle);padding-top:12px;">
-            <p class="eyebrow" style="margin-bottom:6px;">Standard Registers</p>
+            <p class="eyebrow" style="margin-bottom:6px;" data-i18n="standard_registers">Standard Registers</p>
             <div class="report-list">
-              <button type="button" id="btnDailyRiskReport"><span>Daily Risk Report</span><small>Regional summary · PDF</small><b>›</b></button>
-              <button type="button" id="btnWeeklyRiskSummary"><span>Weekly Risk Summary</span><small>Trend &amp; advisory review</small><b>›</b></button>
-              <button type="button" id="btnStateWiseRiskReport"><span>State-wise Risk Report</span><small>8 state situation register</small><b>›</b></button>
+              <button type="button" id="btnDailyRiskReport"><span data-i18n="report_daily">Daily Risk Report</span><small>Regional summary · PDF</small><b>›</b></button>
+              <button type="button" id="btnWeeklyRiskSummary"><span data-i18n="report_weekly">Weekly Risk Summary</span><small>Trend &amp; advisory review</small><b>›</b></button>
+              <button type="button" id="btnStateWiseRiskReport"><span data-i18n="report_statewise">State-wise Risk Report</span><small>8 state situation register</small><b>›</b></button>
             </div>
           </div>
         </article>
@@ -186,22 +287,22 @@
 
       <section class="methodology" id="methodology">
         <div>
-          <p class="eyebrow">About &amp; methodology</p>
-          <h2>From observation to early warning</h2>
-          <p>NER-Landslide is an AI-based early warning and risk monitoring platform designed to support landslide risk assessment across the eight North Eastern states of India. It combines rainfall, soil moisture, terrain, elevation, historical landslide information and remote-sensing observations with AI/ML-based risk analysis.</p>
-          <p>The platform presents area-level risk through an interactive GIS map, risk scores, alerts and community incident reports, helping authorities and communities make faster, better-informed decisions.</p>
-          <p class="methodology-note">Risk estimates are intended for decision support and should be validated against authoritative operational data before deployment.</p>
+          <p class="eyebrow" data-i18n="about_eyebrow">About &amp; methodology</p>
+          <h2 data-i18n="about_title">From observation to early warning</h2>
+          <p data-i18n="about_p1">NER-Landslide is an AI-based early warning and risk monitoring platform designed to support landslide risk assessment across the eight North Eastern states of India. It combines rainfall, soil moisture, terrain, elevation, historical landslide information and remote-sensing observations with AI/ML-based risk analysis.</p>
+          <p data-i18n="about_p2">The platform presents area-level risk through an interactive GIS map, risk scores, alerts and community incident reports, helping authorities and communities make faster, better-informed decisions.</p>
+          <p class="methodology-note" data-i18n="about_note">Risk estimates are intended for decision support and should be validated against authoritative operational data before deployment.</p>
         </div>
         <ol>
-          <li>Satellite &amp;<br>Remote Sensing</li>
-          <li>Rainfall, Soil Moisture<br>&amp; Terrain</li>
-          <li>Data Processing</li>
-          <li>AI/ML Risk<br>Prediction</li>
-          <li>Early Warning</li>
+          <li data-i18n="meth_step1">Satellite &amp; Remote Sensing</li>
+          <li data-i18n="meth_step2">Rainfall, Soil Moisture &amp; Terrain</li>
+          <li data-i18n="meth_step3">Data Processing</li>
+          <li data-i18n="meth_step4">AI/ML Risk Prediction</li>
+          <li data-i18n="meth_step5">Early Warning</li>
         </ol>
       </section>
     </main>
-    <footer>NER-Landslide · Prototype • Demo / simulated data unless connected to an authoritative live source</footer>
+    <footer data-i18n="footer_text">NER-Landslide · Prototype • Demo / simulated data unless connected to an authoritative live source</footer>
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -212,8 +313,8 @@
       <div class="modal-dialog">
         <div class="modal-head">
           <div>
-            <p class="eyebrow">Citizen Ground Intelligence</p>
-            <h3>Submit Landslide Incident</h3>
+            <p class="eyebrow" data-i18n="modal_report_eyebrow">Citizen Ground Intelligence</p>
+            <h3 data-i18n="modal_report_title">Submit Landslide Incident</h3>
           </div>
           <button class="modal-close" id="btnCloseReportModal" aria-label="Close modal">&times;</button>
         </div>
@@ -224,7 +325,7 @@
           <div class="report-auth-banner-content">
             <span class="report-auth-icon">ℹ️</span>
             <div>
-              <p class="report-auth-msg">Please sign in with Google to submit an incident report.</p>
+              <p class="report-auth-msg" data-i18n="auth_welcome_sub">Please sign in with Google to submit an incident report.</p>
               <button type="button" id="btnReportSignInGoogle" class="btn-google-signin btn-google-sm">
                 <svg class="google-icon" width="16" height="16" viewBox="0 0 18 18">
                   <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/>
@@ -232,7 +333,7 @@
                   <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.173 0 7.548 0 9s.347 2.827.957 4.039l3.007-2.332z"/>
                   <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>
                 </svg>
-                <span>Continue with Google</span>
+                <span data-i18n="btn_google_signin">Continue with Google</span>
               </button>
             </div>
           </div>
@@ -240,16 +341,16 @@
         <form id="reportForm">
           <div class="form-row">
             <div class="form-group">
-              <label for="repName">Full Name *</label>
+              <label for="repName" data-i18n="lbl_fullname">Full Name *</label>
               <input type="text" id="repName" class="form-control" required placeholder="e.g. Tenzing Norbu">
             </div>
             <div class="form-group">
-              <label for="repPhone">Contact Phone</label>
+              <label for="repPhone" data-i18n="lbl_phone">Contact Phone</label>
               <input type="tel" id="repPhone" class="form-control" placeholder="+91-XXXXXXXXXX">
             </div>
           </div>
           <div class="form-group">
-            <label for="repType">Incident Classification *</label>
+            <label for="repType" data-i18n="lbl_classification">Incident Classification *</label>
             <select id="repType" class="form-control" required>
               <option value="Rockfall">Rockfall / Boulder Collapse</option>
               <option value="Mudslide">Mudslide / Soil Slump</option>
@@ -261,28 +362,34 @@
             </select>
           </div>
           <div class="form-group">
-            <label>GPS Coordinates *</label>
+            <label data-i18n="lbl_gps">GPS Coordinates *</label>
             <div style="display:flex;gap:8px;">
               <input type="number" step="any" id="repLat" class="form-control" placeholder="Latitude (e.g. 27.53)" required style="flex:1;">
               <input type="number" step="any" id="repLng" class="form-control" placeholder="Longitude (e.g. 88.51)" required style="flex:1;">
-              <button type="button" id="btnAutoGps" class="btn-secondary" style="white-space:nowrap;">Use GPS</button>
+              <button type="button" id="btnAutoGps" class="btn-secondary" style="white-space:nowrap;" data-i18n="btn_use_gps">Use GPS</button>
             </div>
-            <small id="gpsHelp" style="color:var(--slate);font-size:10px;margin-top:3px;display:block;">Auto-detect or click anywhere on the Risk Map to pinpoint location.</small>
+            <small id="gpsHelp" style="color:var(--slate);font-size:10px;margin-top:3px;display:block;" data-i18n="gps_help">Auto-detect or click anywhere on the Risk Map to pinpoint location.</small>
           </div>
           <div class="form-group">
-            <label for="repDesc">Description &amp; Observations *</label>
+            <label for="repDesc" data-i18n="lbl_description">Description &amp; Observations *</label>
             <textarea id="repDesc" rows="3" class="form-control" required placeholder="Describe severity, road blockage, estimated depth, weather conditions..."></textarea>
           </div>
           <div class="form-group">
-            <label for="repPhoto">Attach Photo / Documentation</label>
+            <label for="repPhoto" data-i18n="lbl_photo">Attach Photo / Documentation</label>
             <input type="file" id="repPhoto" accept="image/*" class="form-control">
             <div id="photoPreviewContainer" style="margin-top:6px;display:none;">
               <img id="photoPreview" style="max-height:100px;border:1px solid #bfc9c5;border-radius:2px;" alt="Upload preview">
             </div>
           </div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;color:var(--text-secondary);">
+              <input type="checkbox" id="repAnonymous" style="accent-color:#38bdf8;width:16px;height:16px;">
+              <span data-i18n="lbl_anonymous_report">Submit Anonymously (Hide Name &amp; Contact on public map)</span>
+            </label>
+          </div>
           <div class="modal-actions">
-            <button type="button" class="btn-secondary" id="btnCancelReport">Cancel</button>
-            <button type="submit" class="btn-primary" id="btnSubmitReport">Submit Report</button>
+            <button type="button" class="btn-secondary" id="btnCancelReport" data-i18n="btn_cancel">Cancel</button>
+            <button type="submit" class="btn-primary" id="btnSubmitReport" data-i18n="btn_submit_report">Submit Report</button>
           </div>
         </form>
       </div>
@@ -293,13 +400,13 @@
       <div class="modal-dialog auth-dialog" style="max-width:390px;">
         <div class="modal-head">
           <div>
-            <p class="eyebrow">Sign In</p>
-            <h3 id="authModalTitle">Welcome to NERA</h3>
+            <p class="eyebrow" data-i18n="modal_login_eyebrow">Sign In</p>
+            <h3 id="authModalTitle" data-i18n="modal_login_title">Welcome to NERA</h3>
           </div>
           <button class="modal-close" id="btnCloseAuthModal" aria-label="Close modal">&times;</button>
         </div>
         <div class="auth-modal-body">
-          <p class="auth-welcome-sub">Sign in to access personalized features and submit incident reports.</p>
+          <p class="auth-welcome-sub" data-i18n="auth_welcome_sub">Sign in to access personalized features and submit incident reports.</p>
 
           <!-- Primary Option: Google Sign In -->
           <button type="button" id="btnGoogleSignIn" class="btn-google-signin">
@@ -309,30 +416,30 @@
               <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.173 0 7.548 0 9s.347 2.827.957 4.039l3.007-2.332z"/>
               <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>
             </svg>
-            <span>Continue with Google</span>
+            <span data-i18n="btn_google_signin">Continue with Google</span>
           </button>
 
-          <p class="auth-security-note">
+          <p class="auth-security-note" data-i18n="auth_security_note">
             Your Google account is used only to authenticate your NERA account.
           </p>
 
           <div class="auth-divider">
-            <span>OR EMAIL</span>
+            <span data-i18n="auth_divider_email">OR EMAIL</span>
           </div>
 
           <form id="loginForm">
             <div class="form-group">
-              <label for="authEmail">Email Address</label>
+              <label for="authEmail" data-i18n="lbl_email">Email Address</label>
               <input type="email" id="authEmail" class="form-control" required placeholder="name@domain.com">
             </div>
             <div class="form-group">
-              <label for="authPassword">Password</label>
+              <label for="authPassword" data-i18n="lbl_password">Password</label>
               <input type="password" id="authPassword" class="form-control" required placeholder="••••••••">
             </div>
             <div id="authError" class="auth-error-msg" style="display:none;"></div>
             <div class="modal-actions">
-              <button type="button" class="btn-secondary" id="btnCancelAuth">Cancel</button>
-              <button type="submit" class="btn-primary" style="flex:1;">Sign In</button>
+              <button type="button" class="btn-secondary" id="btnCancelAuth" data-i18n="btn_cancel">Cancel</button>
+              <button type="submit" class="btn-primary" style="flex:1;" data-i18n="btn_login_submit">Sign In</button>
             </div>
           </form>
         </div>
@@ -396,6 +503,53 @@
           <div style="display: flex; gap: 8px;">
             <button type="button" class="btn-secondary" id="btnPrintReportViewer" style="font-size: 11px;">Print / Export PDF</button>
             <button type="button" class="btn-primary" id="btnCloseReportViewerBtn" style="font-size: 11px;">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Emergency Alert Confirmation Modal -->
+    <div id="emergencyModal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-labelledby="emergencyModalTitle">
+      <div class="modal-dialog emergency-dialog" style="max-width:440px;">
+        <div class="modal-head emergency-head">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span class="emergency-modal-icon" aria-hidden="true" style="font-size:22px;">🚨</span>
+            <div>
+              <p class="eyebrow" style="color:#f87171; margin-bottom:2px;" data-i18n="emergency_modal_eyebrow">CRITICAL ADVISORY ACTION</p>
+              <h3 id="emergencyModalTitle" style="margin:0; font-size:17px; color:#ffffff;" data-i18n="emergency_modal_title">Emergency Alert</h3>
+            </div>
+          </div>
+          <button class="modal-close" id="btnCloseEmergencyModal" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="emergency-modal-body" style="padding:16px 22px;">
+          <p class="emergency-prompt-text" style="font-size:14px; font-weight:700; color:#f8fafc; margin:0 0 12px; line-height:1.4;" data-i18n="emergency_prompt">
+            Are you sure you want to trigger an emergency alert?
+          </p>
+          <div class="emergency-info-card" style="background:rgba(239, 68, 68, 0.08); border:1px solid rgba(239, 68, 68, 0.3); border-radius:6px; padding:12px; margin-bottom:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; margin-bottom:6px;">
+              <span style="color:#94a3b8; font-family:'DM Mono',monospace; text-transform:uppercase;" data-i18n="emergency_location_label">Location &amp; Coordinates</span>
+              <span id="emergencyLocationStatus" class="tag" style="background:rgba(56, 189, 248, 0.2); color:#38bdf8; border:1px solid rgba(56, 189, 248, 0.35);">GPS Active</span>
+            </div>
+            <div id="emergencyCoordsDisplay" style="font-family:'DM Mono',monospace; font-size:13px; font-weight:700; color:#ffffff;">
+              Detecting location...
+            </div>
+            <div id="emergencyRegionDisplay" style="font-size:11px; color:#94a3b8; margin-top:4px;">
+              North Eastern Region
+            </div>
+          </div>
+
+          <div id="emergencyStatusMessage" style="display:none; padding:10px 12px; border-radius:6px; font-size:12px; font-weight:600; margin-bottom:12px;"></div>
+
+          <p style="font-size:11px; color:var(--text-muted); margin:0 0 16px; line-height:1.4;" data-i18n="emergency_notice">
+            Notice: Triggering an emergency alert dispatches an immediate critical advisory to disaster response authorities and marks this location for rapid field verification.
+          </p>
+
+          <div class="modal-actions" style="display:flex; gap:10px; justify-content:flex-end;">
+            <button type="button" class="btn-secondary" id="btnCancelEmergency" data-i18n="btn_cancel">Cancel</button>
+            <button type="button" class="btn-emergency-confirm" id="btnConfirmEmergency">
+              <span id="btnConfirmEmergencySpinner" style="display:none; margin-right:5px;">⏳</span>
+              <span id="btnConfirmEmergencyText" data-i18n="btn_confirm_emergency">Confirm Emergency</span>
+            </button>
           </div>
         </div>
       </div>

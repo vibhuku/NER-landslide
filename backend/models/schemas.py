@@ -133,6 +133,12 @@ class RoadOut(BaseModel):
     elevation_m: float
     lat: float
     lng: float
+    segment_km_start: Optional[float] = None
+    segment_km_end: Optional[float] = None
+    start_lat: Optional[float] = None
+    start_lng: Optional[float] = None
+    end_lat: Optional[float] = None
+    end_lng: Optional[float] = None
 
 
 # --- Citizen Report Schemas ---
@@ -218,6 +224,26 @@ class AlertOut(BaseModel):
     created_at: str
 
 
+class EmergencyTriggerRequest(BaseModel):
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    location: Optional[str] = None
+    state: Optional[str] = None
+    notes: Optional[str] = None
+    source: Optional[str] = "web_header_emergency_button"
+
+
+class EmergencyTriggerResponse(BaseModel):
+    success: bool
+    alert_id: str
+    message: str
+    location: str
+    state: str
+    level: str
+    delivery_status: str
+    created_at: str
+
+
 # --- AI/ML Prediction Schemas ---
 
 class PredictionInput(BaseModel):
@@ -264,3 +290,161 @@ class HistoricalLandslideOut(BaseModel):
     trigger: str
     lat: float
     lng: float
+
+
+# --- Advanced SIH26001 Feature Schemas ---
+
+class InfrastructurePointOut(BaseModel):
+    id: str
+    name: str
+    category: str
+    state_code: str
+    lat: float
+    lng: float
+    capacity_beds: int = 0
+    emergency_shelter: int = 0
+
+
+class OfficerActionCreate(BaseModel):
+    alert_id: Optional[str] = None
+    officer_name: str
+    action_type: str
+    notes: Optional[str] = None
+    response_time_minutes: int = 15
+
+
+class OfficerActionOut(BaseModel):
+    id: str
+    alert_id: Optional[str] = None
+    officer_id: str
+    officer_name: str
+    action_type: str
+    notes: Optional[str] = None
+    response_time_minutes: int
+    timestamp: str
+
+
+class VolunteerOut(BaseModel):
+    id: str
+    name: str
+    state_code: str
+    district: str
+    role: str
+    badge: str
+    reports_verified: int
+    status: str
+
+
+class RainfallObservationCreate(BaseModel):
+    reporter_name: str
+    state_code: str
+    district: Optional[str] = None
+    lat: float = 25.5
+    lng: float = 91.8
+    observed_intensity: str = "HEAVY"
+    measured_mm: Optional[float] = None
+
+
+class RainfallObservationOut(BaseModel):
+    id: str
+    reporter_id: Optional[str] = None
+    reporter_name: str
+    state_code: str
+    district: Optional[str] = None
+    lat: float
+    lng: float
+    observed_intensity: str
+    measured_mm: Optional[float] = None
+    timestamp: str
+
+
+class DamageAssessmentCreate(BaseModel):
+    incident_id: Optional[str] = None
+    officer_name: str = "Field Officer"
+    state_code: str
+    district: str
+    infrastructure_impact: str
+    casualties: int = 0
+    displaced_persons: int = 0
+    estimated_loss_lakhs: float = 0.0
+    status: str = "SUBMITTED"
+
+
+class DamageAssessmentOut(BaseModel):
+    id: str
+    incident_id: Optional[str] = None
+    officer_id: str
+    officer_name: str
+    state_code: str
+    district: str
+    infrastructure_impact: str
+    casualties: int
+    displaced_persons: int
+    estimated_loss_lakhs: float
+    status: str
+    timestamp: str
+
+
+
+class FactorBreakdown(BaseModel):
+    factor: str
+    contribution_pct: float
+    description: str
+
+
+class WhatIfSimInput(BaseModel):
+    rainfall_24h_mm: float = Field(..., ge=0, le=500)
+    soil_moisture_pct: float = Field(..., ge=0, le=100)
+    slope_deg: float = Field(..., ge=0, le=90)
+    monsoon_mode: Literal["pre_monsoon", "monsoon", "post_monsoon"] = "monsoon"
+    state_code: Optional[str] = "ML"
+
+
+class WhatIfSimOutput(BaseModel):
+    risk_score: int
+    risk_level: Literal["Low", "Moderate", "High", "Critical"]
+    delta_from_baseline: int
+    primary_trigger: str
+    factors: list[FactorBreakdown]
+    cascade_probability_pct: int
+    recommended_action: str
+    data_status: str = "DEMO / SIMULATED"
+
+
+class LatLng(BaseModel):
+    lat: float
+    lng: float
+
+
+class SafestRouteRequest(BaseModel):
+    origin: LatLng
+    destination: LatLng
+    avoid_blocked_roads: bool = True
+
+
+class RouteSegment(BaseModel):
+    segment_name: str
+    status: str
+    risk_score: int
+    distance_km: float
+
+
+class SafestRouteResponse(BaseModel):
+    safe_path: list[list[float]]
+    total_distance_km: float
+    estimated_time_min: int
+    safety_score: int
+    risk_level: str
+    blocked_roads_bypassed: int
+    shelters_en_route: list[dict[str, Any]]
+    segments: list[RouteSegment]
+    data_status: str = "DEMO / SIMULATED"
+
+
+class NotificationDispatchCreate(BaseModel):
+    channels: list[Literal["sms", "whatsapp", "email", "webpush", "voice_ivr"]]
+    recipients: list[str]
+    message: str
+    priority: Literal["normal", "urgent", "critical"] = "urgent"
+    language: Literal["en", "hi", "as", "bn"] = "en"
+
